@@ -1,0 +1,980 @@
+{
+  "trace_version": "1.0",
+  "generated_at": "2026-05-16T10:20:02.220017",
+  "events": [
+    {
+      "type": "agent_start",
+      "agent": "patrol_agent",
+      "timestamp": "2026-05-16T10:18:52.450190",
+      "state_before": {
+        "task_id": "TASK-2026-0518-001",
+        "mission_type": "export_audit",
+        "plot_id": "B-3",
+        "timestamp": "2026-05-18T09:00:00",
+        "cultivar": "金牡丹",
+        "elevation_m": 850,
+        "business_context": {
+          "is_organic": false,
+          "export_market": "EU",
+          "harvest_date": "2026-06-05",
+          "harvest_window_days": 18,
+          "order_size_kg": 5000,
+          "order_unit_price_per_kg": 380,
+          "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+        },
+        "perception_raw": [
+          {
+            "block_id": "B-3-SE-01",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.91,
+            "ndvi_mean": 0.42,
+            "area_mu_estimate": 1.4,
+            "image_path": "data/images/sample_anthracnose_01.jpg"
+          },
+          {
+            "block_id": "B-3-SE-02",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.88,
+            "ndvi_mean": 0.45,
+            "area_mu_estimate": 0.7,
+            "image_path": "data/images/sample_anthracnose_02.jpg"
+          }
+        ],
+        "agent_trail": [],
+        "errors": [],
+        "finished": false
+      }
+    },
+    {
+      "type": "agent_end",
+      "agent": "patrol_agent",
+      "timestamp": "2026-05-16T10:18:58.425502",
+      "duration_ms": 5975,
+      "output": {
+        "flight_plan": {
+          "waypoints_count": 12,
+          "estimated_duration_min": 18,
+          "coverage_area_mu": 8.6,
+          "altitude_m": 50,
+          "strategy": "Boustrophedon仿地飞行，沿等高线，坡度自适应"
+        },
+        "safety_check": {
+          "weather_ok": true,
+          "wind_ok": true,
+          "geofence_ok": true,
+          "battery_ok": true,
+          "passed": true
+        },
+        "reasoning": "地块B-3面积8.6亩，海拔850m，坡度23°，采用仿地飞行策略沿等高线规划航点。当前风速3.2m/s低于安全阈值，无降雨，气象条件良好。估算航线长度约1.5km，飞行时间18分钟，电池续航充足。电子围栏默认安全，整体飞行安全通过。"
+      },
+      "state_after_keys": [
+        "task_id",
+        "mission_type",
+        "plot_id",
+        "timestamp",
+        "cultivar",
+        "elevation_m",
+        "business_context",
+        "perception_raw",
+        "agent_trail",
+        "errors",
+        "finished",
+        "flight_plan",
+        "safety_check"
+      ]
+    },
+    {
+      "type": "agent_start",
+      "agent": "diagnosis_agent",
+      "timestamp": "2026-05-16T10:18:58.426931",
+      "state_before": {
+        "task_id": "TASK-2026-0518-001",
+        "mission_type": "export_audit",
+        "plot_id": "B-3",
+        "timestamp": "2026-05-18T09:00:00",
+        "cultivar": "金牡丹",
+        "elevation_m": 850,
+        "business_context": {
+          "is_organic": false,
+          "export_market": "EU",
+          "harvest_date": "2026-06-05",
+          "harvest_window_days": 18,
+          "order_size_kg": 5000,
+          "order_unit_price_per_kg": 380,
+          "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+        },
+        "flight_plan": {
+          "waypoints_count": 12,
+          "estimated_duration_min": 18,
+          "coverage_area_mu": 8.6,
+          "altitude_m": 50,
+          "strategy": "Boustrophedon仿地飞行，沿等高线，坡度自适应"
+        },
+        "safety_check": {
+          "weather_ok": true,
+          "wind_ok": true,
+          "geofence_ok": true,
+          "battery_ok": true,
+          "passed": true
+        },
+        "perception_raw": [
+          {
+            "block_id": "B-3-SE-01",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.91,
+            "ndvi_mean": 0.42,
+            "area_mu_estimate": 1.4,
+            "image_path": "data/images/sample_anthracnose_01.jpg"
+          },
+          {
+            "block_id": "B-3-SE-02",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.88,
+            "ndvi_mean": 0.45,
+            "area_mu_estimate": 0.7,
+            "image_path": "data/images/sample_anthracnose_02.jpg"
+          }
+        ],
+        "agent_trail": [
+          {
+            "agent": "patrol",
+            "summary": "地块B-3面积8.6亩，海拔850m，坡度23°，采用仿地飞行策略沿等高线规划航点。当前风速3.2m/s低于安全阈值，无降雨，气象条件良好。估算航线长度约1.5km，飞行时间18分钟，电池续航充足。电子围栏默认安全，整体飞行安全通过。"
+          }
+        ],
+        "errors": [],
+        "finished": false
+      }
+    },
+    {
+      "type": "agent_end",
+      "agent": "diagnosis_agent",
+      "timestamp": "2026-05-16T10:19:05.761150",
+      "duration_ms": 7334,
+      "output": {
+        "diagnosis": {
+          "classification": {
+            "top1_disease": "茶炭疽病",
+            "top1_confidence": 0.91,
+            "top3_candidates": [
+              {
+                "name": "茶炭疽病",
+                "confidence": 0.91
+              },
+              {
+                "name": "茶云纹叶枯病",
+                "confidence": 0.3
+              },
+              {
+                "name": "茶轮斑病",
+                "confidence": 0.2
+              }
+            ]
+          },
+          "severity_grading": {
+            "level": 3,
+            "level_label": "中等偏重",
+            "lesion_density": 8,
+            "ndvi_drop_pct": 38,
+            "spatial_distribution": "连续"
+          },
+          "affected_blocks": [
+            "B-3-SE-01",
+            "B-3-SE-02"
+          ],
+          "total_area_mu": 2.1,
+          "ndvi_mean": 0.44,
+          "disease": "茶炭疽病",
+          "severity": 3,
+          "severity_label": "中等偏重",
+          "average_confidence": 0.91
+        },
+        "needs_vlm_review": false,
+        "reasoning": "两个检测块均识别为茶炭疽病，置信度均高于0.85，边缘端推理可信。发病区NDVI均值0.44，相对于健康基线0.7下降约38%，表明叶片光合能力显著受损。病斑在相邻地块连续分布，累计面积2.1亩，结合NDVI降幅和面积占比，判定为中等偏重发病。由于置信度高，无需VLM复核。"
+      },
+      "state_after_keys": [
+        "task_id",
+        "mission_type",
+        "plot_id",
+        "timestamp",
+        "cultivar",
+        "elevation_m",
+        "business_context",
+        "flight_plan",
+        "safety_check",
+        "perception_raw",
+        "agent_trail",
+        "errors",
+        "finished",
+        "diagnosis",
+        "needs_vlm_review"
+      ]
+    },
+    {
+      "type": "agent_start",
+      "agent": "causal_agent",
+      "timestamp": "2026-05-16T10:19:05.762416",
+      "state_before": {
+        "task_id": "TASK-2026-0518-001",
+        "mission_type": "export_audit",
+        "plot_id": "B-3",
+        "timestamp": "2026-05-18T09:00:00",
+        "cultivar": "金牡丹",
+        "elevation_m": 850,
+        "business_context": {
+          "is_organic": false,
+          "export_market": "EU",
+          "harvest_date": "2026-06-05",
+          "harvest_window_days": 18,
+          "order_size_kg": 5000,
+          "order_unit_price_per_kg": 380,
+          "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+        },
+        "flight_plan": {
+          "waypoints_count": 12,
+          "estimated_duration_min": 18,
+          "coverage_area_mu": 8.6,
+          "altitude_m": 50,
+          "strategy": "Boustrophedon仿地飞行，沿等高线，坡度自适应"
+        },
+        "safety_check": {
+          "weather_ok": true,
+          "wind_ok": true,
+          "geofence_ok": true,
+          "battery_ok": true,
+          "passed": true
+        },
+        "perception_raw": [
+          {
+            "block_id": "B-3-SE-01",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.91,
+            "ndvi_mean": 0.42,
+            "area_mu_estimate": 1.4,
+            "image_path": "data/images/sample_anthracnose_01.jpg"
+          },
+          {
+            "block_id": "B-3-SE-02",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.88,
+            "ndvi_mean": 0.45,
+            "area_mu_estimate": 0.7,
+            "image_path": "data/images/sample_anthracnose_02.jpg"
+          }
+        ],
+        "diagnosis": {
+          "classification": {
+            "top1_disease": "茶炭疽病",
+            "top1_confidence": 0.91,
+            "top3_candidates": [
+              {
+                "name": "茶炭疽病",
+                "confidence": 0.91
+              },
+              {
+                "name": "茶云纹叶枯病",
+                "confidence": 0.3
+              },
+              {
+                "name": "茶轮斑病",
+                "confidence": 0.2
+              }
+            ]
+          },
+          "severity_grading": {
+            "level": 3,
+            "level_label": "中等偏重",
+            "lesion_density": 8,
+            "ndvi_drop_pct": 38,
+            "spatial_distribution": "连续"
+          },
+          "affected_blocks": [
+            "B-3-SE-01",
+            "B-3-SE-02"
+          ],
+          "total_area_mu": 2.1,
+          "ndvi_mean": 0.44,
+          "disease": "茶炭疽病",
+          "severity": 3,
+          "severity_label": "中等偏重",
+          "average_confidence": 0.91
+        },
+        "needs_vlm_review": false,
+        "agent_trail": [
+          {
+            "agent": "patrol",
+            "summary": "地块B-3面积8.6亩，海拔850m，坡度23°，采用仿地飞行策略沿等高线规划航点。当前风速3.2m/s低于安全阈值，无降雨，气象条件良好。估算航线长度约1.5km，飞行时间18分钟，电池续航充足。电子围栏默认安全，整体飞行安全通过。"
+          },
+          {
+            "agent": "diagnosis",
+            "summary": "两个检测块均识别为茶炭疽病，置信度均高于0.85，边缘端推理可信。发病区NDVI均值0.44，相对于健康基线0.7下降约38%，表明叶片光合能力显著受损。病斑在相邻地块连续分布，累计面积2.1亩，结合NDVI降幅和面积占比，判定为中等偏重发病。由于置信度高，无需VLM复核。"
+          }
+        ],
+        "errors": [],
+        "finished": false
+      }
+    },
+    {
+      "type": "agent_end",
+      "agent": "causal_agent",
+      "timestamp": "2026-05-16T10:19:14.326272",
+      "duration_ms": 8563,
+      "output": {
+        "causal_analysis": {
+          "primary_cause": "连续阴雨天气导致茶园高湿（>75%）环境，适宜茶炭疽病病原菌（刺盘孢菌）侵染和扩散",
+          "contributing_factors": [
+            "金牡丹品种易感茶炭疽病",
+            "当前处于春茶嫩芽期，新梢组织幼嫩，抗病性弱",
+            "未来7天气温16-26℃，处于茶炭疽病最适发生温度（20-28℃）区间"
+          ],
+          "knowledge_citations": [
+            "中国农科院茶叶研究所·茶树病虫害防治手册2024",
+            "福建省农业农村厅·2025年茶叶病害防治指南"
+          ],
+          "future_7d_risk": {
+            "spread_probability": 0.85,
+            "expected_spread_direction": "东南方向（参考夏季主导偏南风及B-3-SE区域连续分布特征）",
+            "expected_severity_in_7d": 4
+          },
+          "urgency_level": "高"
+        },
+        "reasoning": "确诊为茶炭疽病（置信度0.91），严重度中等偏重（3级）。根据专家知识库，茶炭疽病由刺盘孢菌引起，高湿（>75%）和中温（20-28℃）是主要条件；金牡丹品种易感，且当前处于春茶嫩芽期，抗病性弱。未来7天气象预报显示有2天降雨、4天高湿，气温16-26℃，平均约21℃，非常有利于孢子萌发和传播。综上，主要诱因是连续阴雨造成的高湿环境，次要因素为易感品种和嫩叶期。预测未来7-14天病害将继续扩散，概率85%，方向东南，严重度将加重至4级（严重），需高度关注。"
+      },
+      "state_after_keys": [
+        "task_id",
+        "mission_type",
+        "plot_id",
+        "timestamp",
+        "cultivar",
+        "elevation_m",
+        "business_context",
+        "flight_plan",
+        "safety_check",
+        "perception_raw",
+        "diagnosis",
+        "needs_vlm_review",
+        "agent_trail",
+        "errors",
+        "finished",
+        "causal_analysis"
+      ]
+    },
+    {
+      "type": "agent_start",
+      "agent": "treatment_agent",
+      "timestamp": "2026-05-16T10:19:14.327452",
+      "state_before": {
+        "task_id": "TASK-2026-0518-001",
+        "mission_type": "export_audit",
+        "plot_id": "B-3",
+        "timestamp": "2026-05-18T09:00:00",
+        "cultivar": "金牡丹",
+        "elevation_m": 850,
+        "business_context": {
+          "is_organic": false,
+          "export_market": "EU",
+          "harvest_date": "2026-06-05",
+          "harvest_window_days": 18,
+          "order_size_kg": 5000,
+          "order_unit_price_per_kg": 380,
+          "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+        },
+        "flight_plan": {
+          "waypoints_count": 12,
+          "estimated_duration_min": 18,
+          "coverage_area_mu": 8.6,
+          "altitude_m": 50,
+          "strategy": "Boustrophedon仿地飞行，沿等高线，坡度自适应"
+        },
+        "safety_check": {
+          "weather_ok": true,
+          "wind_ok": true,
+          "geofence_ok": true,
+          "battery_ok": true,
+          "passed": true
+        },
+        "perception_raw": [
+          {
+            "block_id": "B-3-SE-01",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.91,
+            "ndvi_mean": 0.42,
+            "area_mu_estimate": 1.4,
+            "image_path": "data/images/sample_anthracnose_01.jpg"
+          },
+          {
+            "block_id": "B-3-SE-02",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.88,
+            "ndvi_mean": 0.45,
+            "area_mu_estimate": 0.7,
+            "image_path": "data/images/sample_anthracnose_02.jpg"
+          }
+        ],
+        "diagnosis": {
+          "classification": {
+            "top1_disease": "茶炭疽病",
+            "top1_confidence": 0.91,
+            "top3_candidates": [
+              {
+                "name": "茶炭疽病",
+                "confidence": 0.91
+              },
+              {
+                "name": "茶云纹叶枯病",
+                "confidence": 0.3
+              },
+              {
+                "name": "茶轮斑病",
+                "confidence": 0.2
+              }
+            ]
+          },
+          "severity_grading": {
+            "level": 3,
+            "level_label": "中等偏重",
+            "lesion_density": 8,
+            "ndvi_drop_pct": 38,
+            "spatial_distribution": "连续"
+          },
+          "affected_blocks": [
+            "B-3-SE-01",
+            "B-3-SE-02"
+          ],
+          "total_area_mu": 2.1,
+          "ndvi_mean": 0.44,
+          "disease": "茶炭疽病",
+          "severity": 3,
+          "severity_label": "中等偏重",
+          "average_confidence": 0.91
+        },
+        "needs_vlm_review": false,
+        "causal_analysis": {
+          "primary_cause": "连续阴雨天气导致茶园高湿（>75%）环境，适宜茶炭疽病病原菌（刺盘孢菌）侵染和扩散",
+          "contributing_factors": [
+            "金牡丹品种易感茶炭疽病",
+            "当前处于春茶嫩芽期，新梢组织幼嫩，抗病性弱",
+            "未来7天气温16-26℃，处于茶炭疽病最适发生温度（20-28℃）区间"
+          ],
+          "knowledge_citations": [
+            "中国农科院茶叶研究所·茶树病虫害防治手册2024",
+            "福建省农业农村厅·2025年茶叶病害防治指南"
+          ],
+          "future_7d_risk": {
+            "spread_probability": 0.85,
+            "expected_spread_direction": "东南方向（参考夏季主导偏南风及B-3-SE区域连续分布特征）",
+            "expected_severity_in_7d": 4
+          },
+          "urgency_level": "高"
+        },
+        "agent_trail": [
+          {
+            "agent": "patrol",
+            "summary": "地块B-3面积8.6亩，海拔850m，坡度23°，采用仿地飞行策略沿等高线规划航点。当前风速3.2m/s低于安全阈值，无降雨，气象条件良好。估算航线长度约1.5km，飞行时间18分钟，电池续航充足。电子围栏默认安全，整体飞行安全通过。"
+          },
+          {
+            "agent": "diagnosis",
+            "summary": "两个检测块均识别为茶炭疽病，置信度均高于0.85，边缘端推理可信。发病区NDVI均值0.44，相对于健康基线0.7下降约38%，表明叶片光合能力显著受损。病斑在相邻地块连续分布，累计面积2.1亩，结合NDVI降幅和面积占比，判定为中等偏重发病。由于置信度高，无需VLM复核。"
+          },
+          {
+            "agent": "causal",
+            "summary": "确诊为茶炭疽病（置信度0.91），严重度中等偏重（3级）。根据专家知识库，茶炭疽病由刺盘孢菌引起，高湿（>75%）和中温（20-28℃）是主要条件；金牡丹品种易感，且当前处于春茶嫩芽期，抗病性弱。未来7天气象预报显示有2天降雨、4天高湿，气温16-26℃，平均约21℃，非常有利于孢子萌发和传播。综上，主要诱因是连续阴雨造成的高湿环境，次要因素为易感品种和嫩叶期。预测未来7-14天病害将继续扩散，概率85%，方向东南，严重度将加重至4级（严重），需高度关注。"
+          }
+        ],
+        "errors": [],
+        "finished": false
+      }
+    },
+    {
+      "type": "phase_start",
+      "timestamp": "2026-05-16T10:19:14.327514",
+      "phase": "candidate_generation",
+      "agent": "treatment"
+    },
+    {
+      "type": "phase_start",
+      "timestamp": "2026-05-16T10:19:29.958945",
+      "phase": "compliance_solving",
+      "agent": "treatment"
+    },
+    {
+      "type": "compliance_complete",
+      "timestamp": "2026-05-16T10:19:29.965523",
+      "passed": 3,
+      "rejected": 1,
+      "risk": "high"
+    },
+    {
+      "type": "hil_pause",
+      "timestamp": "2026-05-16T10:19:29.965536",
+      "agent": "treatment",
+      "reason": "风险等级 high，需人工签字"
+    },
+    {
+      "type": "hil_approved",
+      "timestamp": "2026-05-16T10:19:29.966002",
+      "agent": "treatment",
+      "signature": "ZHANG001"
+    },
+    {
+      "type": "agent_end",
+      "agent": "treatment_agent",
+      "timestamp": "2026-05-16T10:19:47.117362",
+      "duration_ms": 32789,
+      "output": {
+        "final_prescription": {
+          "pesticide_id": "P004",
+          "pesticide_name": "苦参碱 0.5%水剂（生物源）",
+          "formulation": "水剂",
+          "registration_no": "PD201****",
+          "dilution_ratio": "1:500",
+          "dose_ml_per_mu": 120,
+          "total_dose_ml": 6000,
+          "application_method": "叶面喷雾",
+          "application_timing": "收获前5-18天，立即施用",
+          "phi_days": 5,
+          "earliest_harvest_date": "2026-05-21",
+          "compliance_status": {
+            "domestic_mrl": "通过",
+            "eu_mrl": "通过",
+            "organic": "不适用",
+            "banned_list": "通过"
+          },
+          "rotation_advice": "建议下次施药轮换为波尔多液（矿物源）或苯醚甲环唑·吡唑醚菌酯，避免连续使用同类型生物碱药剂"
+        },
+        "risk_level": "medium",
+        "requires_human_approval": true,
+        "reasoning": "苦参碱为生物源农药，残留风险极低，对中国和欧盟MRL均有较大安全余量（EU margin 0.08 mg/kg），PHI仅5天，可灵活安排施药时间，符合出口欧盟高价值订单的食品安全要求。虽然P001也通过合规，但其EU margin过小（0.02），风险偏高；P005波尔多液同样安全，但苦参碱更环保且对非靶标生物友好。因此选择苦参碱作为最优方案，需人工审批确认。"
+      },
+      "state_after_keys": [
+        "task_id",
+        "mission_type",
+        "plot_id",
+        "timestamp",
+        "cultivar",
+        "elevation_m",
+        "business_context",
+        "flight_plan",
+        "safety_check",
+        "perception_raw",
+        "diagnosis",
+        "needs_vlm_review",
+        "causal_analysis",
+        "agent_trail",
+        "errors",
+        "finished",
+        "candidate_treatments",
+        "compliance_report",
+        "requires_human_approval",
+        "human_signature",
+        "final_prescription"
+      ]
+    },
+    {
+      "type": "agent_start",
+      "agent": "report_agent",
+      "timestamp": "2026-05-16T10:19:47.118510",
+      "state_before": {
+        "task_id": "TASK-2026-0518-001",
+        "mission_type": "export_audit",
+        "plot_id": "B-3",
+        "timestamp": "2026-05-18T09:00:00",
+        "cultivar": "金牡丹",
+        "elevation_m": 850,
+        "business_context": {
+          "is_organic": false,
+          "export_market": "EU",
+          "harvest_date": "2026-06-05",
+          "harvest_window_days": 18,
+          "order_size_kg": 5000,
+          "order_unit_price_per_kg": 380,
+          "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+        },
+        "flight_plan": {
+          "waypoints_count": 12,
+          "estimated_duration_min": 18,
+          "coverage_area_mu": 8.6,
+          "altitude_m": 50,
+          "strategy": "Boustrophedon仿地飞行，沿等高线，坡度自适应"
+        },
+        "safety_check": {
+          "weather_ok": true,
+          "wind_ok": true,
+          "geofence_ok": true,
+          "battery_ok": true,
+          "passed": true
+        },
+        "perception_raw": [
+          {
+            "block_id": "B-3-SE-01",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.91,
+            "ndvi_mean": 0.42,
+            "area_mu_estimate": 1.4,
+            "image_path": "data/images/sample_anthracnose_01.jpg"
+          },
+          {
+            "block_id": "B-3-SE-02",
+            "disease_candidate": "茶炭疽病",
+            "confidence": 0.88,
+            "ndvi_mean": 0.45,
+            "area_mu_estimate": 0.7,
+            "image_path": "data/images/sample_anthracnose_02.jpg"
+          }
+        ],
+        "diagnosis": {
+          "classification": {
+            "top1_disease": "茶炭疽病",
+            "top1_confidence": 0.91,
+            "top3_candidates": [
+              {
+                "name": "茶炭疽病",
+                "confidence": 0.91
+              },
+              {
+                "name": "茶云纹叶枯病",
+                "confidence": 0.3
+              },
+              {
+                "name": "茶轮斑病",
+                "confidence": 0.2
+              }
+            ]
+          },
+          "severity_grading": {
+            "level": 3,
+            "level_label": "中等偏重",
+            "lesion_density": 8,
+            "ndvi_drop_pct": 38,
+            "spatial_distribution": "连续"
+          },
+          "affected_blocks": [
+            "B-3-SE-01",
+            "B-3-SE-02"
+          ],
+          "total_area_mu": 2.1,
+          "ndvi_mean": 0.44,
+          "disease": "茶炭疽病",
+          "severity": 3,
+          "severity_label": "中等偏重",
+          "average_confidence": 0.91
+        },
+        "needs_vlm_review": false,
+        "causal_analysis": {
+          "primary_cause": "连续阴雨天气导致茶园高湿（>75%）环境，适宜茶炭疽病病原菌（刺盘孢菌）侵染和扩散",
+          "contributing_factors": [
+            "金牡丹品种易感茶炭疽病",
+            "当前处于春茶嫩芽期，新梢组织幼嫩，抗病性弱",
+            "未来7天气温16-26℃，处于茶炭疽病最适发生温度（20-28℃）区间"
+          ],
+          "knowledge_citations": [
+            "中国农科院茶叶研究所·茶树病虫害防治手册2024",
+            "福建省农业农村厅·2025年茶叶病害防治指南"
+          ],
+          "future_7d_risk": {
+            "spread_probability": 0.85,
+            "expected_spread_direction": "东南方向（参考夏季主导偏南风及B-3-SE区域连续分布特征）",
+            "expected_severity_in_7d": 4
+          },
+          "urgency_level": "高"
+        },
+        "candidate_treatments": [
+          {
+            "pesticide_id": "P001",
+            "pesticide_name": "苯醚甲环唑·吡唑醚菌酯 30%悬浮剂",
+            "dilution_ratio": "1:1500",
+            "dose_ml_per_mu": 35,
+            "application_timing": "下午4点后或阴天，避免高温强光",
+            "expected_efficacy": 0.85,
+            "selection_reason": "复配剂兼具保护和治疗作用，对茶炭疽病防效优异，PHI为14天，在采收窗口内可用，成本适中。"
+          },
+          {
+            "pesticide_id": "P002",
+            "pesticide_name": "嘧菌酯 25%悬浮剂",
+            "dilution_ratio": "1:1200",
+            "dose_ml_per_mu": 40,
+            "application_timing": "傍晚施药，注意均匀覆盖叶片",
+            "expected_efficacy": 0.8,
+            "selection_reason": "高效单剂，对茶炭疽病特效，残留风险低，PHI仅10天，适合临近采摘使用，可与复配剂轮换。"
+          },
+          {
+            "pesticide_id": "P004",
+            "pesticide_name": "苦参碱 0.5%水剂（生物源）",
+            "dilution_ratio": "1:800",
+            "dose_ml_per_mu": 90,
+            "application_timing": "发病初期或预防，连续施药2次间隔7天",
+            "expected_efficacy": 0.6,
+            "selection_reason": "生物源农药，残留极低，符合出口欧盟高标准，PHI仅5天，适用于轻度发病或作为辅助降残措施。"
+          },
+          {
+            "pesticide_id": "P005",
+            "pesticide_name": "波尔多液（矿物源）",
+            "dilution_ratio": "1:200",
+            "dose_ml_per_mu": 200,
+            "application_timing": "晴天傍晚或阴天，避开烈日",
+            "expected_efficacy": 0.65,
+            "selection_reason": "成本最低，广谱保护性杀菌剂，可延缓抗性，PHI为7天，适用于预防和协同防治，但注意铜积累风险。"
+          }
+        ],
+        "compliance_report": {
+          "candidates_checked": [
+            {
+              "pesticide_id": "P001",
+              "pesticide_name": "苯醚甲环唑·吡唑醚菌酯 30%悬浮剂",
+              "checks": {
+                "banned_list": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 茶树禁用清单",
+                  "matched": []
+                },
+                "phi": {
+                  "passed": true,
+                  "rule": "安全间隔期 (PHI)",
+                  "phi_days": 14,
+                  "days_until_harvest": 20,
+                  "earliest_harvest_date": "2026-05-30"
+                },
+                "mrl_china": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 国内MRL",
+                  "active_ingredient": "苯醚甲环唑+吡唑醚菌酯",
+                  "limit_mg_kg": 0.5,
+                  "predicted_residue_mg_kg": 0.08,
+                  "margin": 0.42
+                },
+                "mrl_eu": {
+                  "passed": true,
+                  "rule": "欧盟 EC 396/2005 MRL",
+                  "active_ingredient": "苯醚甲环唑+吡唑醚菌酯",
+                  "limit_mg_kg": 0.1,
+                  "predicted_residue_mg_kg": 0.08,
+                  "margin": 0.02
+                }
+              },
+              "all_passed": true,
+              "risk_level": "high"
+            },
+            {
+              "pesticide_id": "P002",
+              "pesticide_name": "嘧菌酯 25%悬浮剂",
+              "checks": {
+                "banned_list": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 茶树禁用清单",
+                  "matched": []
+                },
+                "phi": {
+                  "passed": true,
+                  "rule": "安全间隔期 (PHI)",
+                  "phi_days": 10,
+                  "days_until_harvest": 20,
+                  "earliest_harvest_date": "2026-05-26"
+                },
+                "mrl_china": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 国内MRL",
+                  "active_ingredient": "嘧菌酯",
+                  "limit_mg_kg": 1.0,
+                  "predicted_residue_mg_kg": 0.15,
+                  "margin": 0.85
+                },
+                "mrl_eu": {
+                  "passed": false,
+                  "rule": "欧盟 EC 396/2005 MRL",
+                  "active_ingredient": "嘧菌酯",
+                  "limit_mg_kg": 0.05,
+                  "predicted_residue_mg_kg": 0.15,
+                  "margin": -0.1
+                }
+              },
+              "all_passed": false,
+              "risk_level": "rejected"
+            },
+            {
+              "pesticide_id": "P004",
+              "pesticide_name": "苦参碱 0.5%水剂（生物源）",
+              "checks": {
+                "banned_list": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 茶树禁用清单",
+                  "matched": []
+                },
+                "phi": {
+                  "passed": true,
+                  "rule": "安全间隔期 (PHI)",
+                  "phi_days": 5,
+                  "days_until_harvest": 20,
+                  "earliest_harvest_date": "2026-05-21"
+                },
+                "mrl_china": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 国内MRL",
+                  "active_ingredient": "苦参碱",
+                  "limit_mg_kg": 5.0,
+                  "predicted_residue_mg_kg": 0.02,
+                  "margin": 4.98
+                },
+                "mrl_eu": {
+                  "passed": true,
+                  "rule": "欧盟 EC 396/2005 MRL",
+                  "active_ingredient": "苦参碱",
+                  "limit_mg_kg": 0.1,
+                  "predicted_residue_mg_kg": 0.02,
+                  "margin": 0.08
+                }
+              },
+              "all_passed": true,
+              "risk_level": "medium"
+            },
+            {
+              "pesticide_id": "P005",
+              "pesticide_name": "波尔多液（矿物源）",
+              "checks": {
+                "banned_list": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 茶树禁用清单",
+                  "matched": []
+                },
+                "phi": {
+                  "passed": true,
+                  "rule": "安全间隔期 (PHI)",
+                  "phi_days": 7,
+                  "days_until_harvest": 20,
+                  "earliest_harvest_date": "2026-05-23"
+                },
+                "mrl_china": {
+                  "passed": true,
+                  "rule": "GB 2763-2026 国内MRL",
+                  "active_ingredient": "硫酸铜+石灰",
+                  "limit_mg_kg": 30.0,
+                  "predicted_residue_mg_kg": 0.3,
+                  "margin": 29.7
+                },
+                "mrl_eu": {
+                  "passed": true,
+                  "rule": "欧盟 EC 396/2005 MRL",
+                  "active_ingredient": "硫酸铜+石灰",
+                  "limit_mg_kg": 30.0,
+                  "predicted_residue_mg_kg": 0.3,
+                  "margin": 29.7
+                }
+              },
+              "all_passed": true,
+              "risk_level": "medium"
+            }
+          ],
+          "passed_count": 3,
+          "rejected_count": 1,
+          "overall_risk_level": "high",
+          "requires_human_approval": true
+        },
+        "final_prescription": {
+          "pesticide_id": "P004",
+          "pesticide_name": "苦参碱 0.5%水剂（生物源）",
+          "formulation": "水剂",
+          "registration_no": "PD201****",
+          "dilution_ratio": "1:500",
+          "dose_ml_per_mu": 120,
+          "total_dose_ml": 6000,
+          "application_method": "叶面喷雾",
+          "application_timing": "收获前5-18天，立即施用",
+          "phi_days": 5,
+          "earliest_harvest_date": "2026-05-21",
+          "compliance_status": {
+            "domestic_mrl": "通过",
+            "eu_mrl": "通过",
+            "organic": "不适用",
+            "banned_list": "通过"
+          },
+          "rotation_advice": "建议下次施药轮换为波尔多液（矿物源）或苯醚甲环唑·吡唑醚菌酯，避免连续使用同类型生物碱药剂"
+        },
+        "requires_human_approval": true,
+        "human_signature": "ZHANG001",
+        "agent_trail": [
+          {
+            "agent": "patrol",
+            "summary": "地块B-3面积8.6亩，海拔850m，坡度23°，采用仿地飞行策略沿等高线规划航点。当前风速3.2m/s低于安全阈值，无降雨，气象条件良好。估算航线长度约1.5km，飞行时间18分钟，电池续航充足。电子围栏默认安全，整体飞行安全通过。"
+          },
+          {
+            "agent": "diagnosis",
+            "summary": "两个检测块均识别为茶炭疽病，置信度均高于0.85，边缘端推理可信。发病区NDVI均值0.44，相对于健康基线0.7下降约38%，表明叶片光合能力显著受损。病斑在相邻地块连续分布，累计面积2.1亩，结合NDVI降幅和面积占比，判定为中等偏重发病。由于置信度高，无需VLM复核。"
+          },
+          {
+            "agent": "causal",
+            "summary": "确诊为茶炭疽病（置信度0.91），严重度中等偏重（3级）。根据专家知识库，茶炭疽病由刺盘孢菌引起，高湿（>75%）和中温（20-28℃）是主要条件；金牡丹品种易感，且当前处于春茶嫩芽期，抗病性弱。未来7天气象预报显示有2天降雨、4天高湿，气温16-26℃，平均约21℃，非常有利于孢子萌发和传播。综上，主要诱因是连续阴雨造成的高湿环境，次要因素为易感品种和嫩叶期。预测未来7-14天病害将继续扩散，概率85%，方向东南，严重度将加重至4级（严重），需高度关注。"
+          },
+          {
+            "agent": "treatment",
+            "summary": "苦参碱为生物源农药，残留风险极低，对中国和欧盟MRL均有较大安全余量（EU margin 0.08 mg/kg），PHI仅5天，可灵活安排施药时间，符合出口欧盟高价值订单的食品安全要求。虽然P001也通过合规，但其EU margin过小（0.02），风险偏高；P005波尔多液同样安全，但苦参碱更环保且对非靶标生物友好。因此选择苦参碱作为最优方案，需人工审批确认。"
+          }
+        ],
+        "errors": [],
+        "finished": false
+      }
+    },
+    {
+      "type": "agent_end",
+      "agent": "report_agent",
+      "timestamp": "2026-05-16T10:20:02.215336",
+      "duration_ms": 15096,
+      "output": {
+        "report_farmer": "师傅，茶园炭疽病有点凶（中等偏重），赶紧打药！用苦参碱（生物药），一瓶兑500倍水，一亩地打120毫升，对着叶子喷匀。打完等5天才能采茶，最早5月21号可以摘。这次药安全，欧盟标准都达标，放心用。注意别挨着下次用波尔多液换着打。",
+        "report_manager": {
+          "kpi_summary": {
+            "affected_area_mu": 2.1,
+            "intervention_cost_estimate_yuan": 0,
+            "expected_yield_protection_pct": 100,
+            "compliance_status": "达标",
+            "next_harvest_date": "2026-05-21"
+          },
+          "action_items": [
+            "立即对B-3地块（SE-01、SE-02）施用苦参碱0.5%水剂，稀释500倍，亩用量120ml，叶面喷雾。",
+            "施药后记录农事台账，注意PHI间隔5天，5月21日前不得采收。"
+          ]
+        },
+        "report_government": {
+          "filing_id": "TEA-2026-05-16-001",
+          "operation_record": {
+            "date": "2026-05-16",
+            "plot_id": "B-3",
+            "pesticide_name": "苦参碱 0.5%水剂（生物源）",
+            "registration_no": "PD201****",
+            "dose": "120毫升/亩",
+            "operator_signature": "ZHANG001"
+          },
+          "compliance_certificate": {
+            "gb2763_2026": "通过",
+            "eu_mrl": "通过",
+            "phi_compliance": "通过",
+            "banned_list_compliance": "通过"
+          }
+        }
+      },
+      "state_after_keys": [
+        "task_id",
+        "mission_type",
+        "plot_id",
+        "timestamp",
+        "cultivar",
+        "elevation_m",
+        "business_context",
+        "flight_plan",
+        "safety_check",
+        "perception_raw",
+        "diagnosis",
+        "needs_vlm_review",
+        "causal_analysis",
+        "candidate_treatments",
+        "compliance_report",
+        "final_prescription",
+        "requires_human_approval",
+        "human_signature",
+        "agent_trail",
+        "errors",
+        "finished",
+        "report_farmer",
+        "report_manager",
+        "report_government"
+      ]
+    }
+  ]
+}

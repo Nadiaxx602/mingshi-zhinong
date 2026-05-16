@@ -1,0 +1,55 @@
+{
+  "_schema_version": "1.0",
+  "_note": "Day1 演示用知识库。当前 src/tools/knowledge.py 直接使用硬编码内容；后续 Day2/3 改造为 RAG/KG 时从此文件加载。",
+  "diseases": {
+    "茶炭疽病": {
+      "pathogen": "刺盘孢菌 Colletotrichum spp.",
+      "favorable_conditions": {
+        "humidity_pct_min": 75,
+        "temp_c_range": [20, 28],
+        "season": "春茶嫩芽期"
+      },
+      "susceptible_cultivars": ["金牡丹", "福鼎大白"],
+      "citations": [
+        {
+          "source": "中国农科院茶叶研究所·茶树病虫害防治手册2024",
+          "snippet": "茶炭疽病由刺盘孢菌Colletotrichum属真菌侵染所致，在高湿（>75%）+ 中温（20-28℃）环境下扩散迅速，金牡丹、福鼎大白等品种较为易感。"
+        },
+        {
+          "source": "福建省农业农村厅·2025年茶叶病害防治指南",
+          "snippet": "春茶嫩芽期 + 连续阴雨 是主要诱因。建议在发病初期（病斑直径<2mm时）用药，三唑类与甲氧基丙烯酸酯类轮换使用，避免抗药性。"
+        }
+      ]
+    },
+    "茶饼病": {
+      "pathogen": "茶饼病菌 Exobasidium vexans",
+      "favorable_conditions": {
+        "humidity_pct_min": 80,
+        "temp_c_range": [15, 22],
+        "season": "高山茶区春秋两季"
+      },
+      "susceptible_cultivars": ["龙井43", "鸠坑种"],
+      "citations": [
+        {
+          "source": "茶树病虫害绿色防控技术规范 NY/T 3232-2018",
+          "snippet": "茶饼病在海拔800m以上的高山茶园发生较重，冷凉高湿环境利于病菌孢子萌发。"
+        }
+      ]
+    },
+    "茶云纹叶枯病": {
+      "pathogen": "茶拟盘多毛孢 Pestalotiopsis theae",
+      "favorable_conditions": {
+        "humidity_pct_min": 70,
+        "temp_c_range": [25, 30],
+        "season": "夏秋季"
+      },
+      "susceptible_cultivars": ["乌牛早", "中茶108"],
+      "citations": [
+        {
+          "source": "中国茶叶学报·2023年第43卷",
+          "snippet": "茶云纹叶枯病多发于成龄叶片，高温高湿+树势衰弱时发病加重。"
+        }
+      ]
+    }
+  }
+}

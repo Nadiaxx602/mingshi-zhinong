@@ -1,0 +1,38 @@
+{
+  "task_id": "TASK-2026-0518-001",
+  "mission_type": "export_audit",
+  "plot_id": "B-3",
+  "timestamp": "2026-05-18T09:00:00",
+  "cultivar": "金牡丹",
+  "elevation_m": 850,
+  "business_context": {
+    "is_organic": false,
+    "export_market": "EU",
+    "harvest_date": "2026-06-05",
+    "harvest_window_days": 18,
+    "order_size_kg": 5000,
+    "order_unit_price_per_kg": 380,
+    "buyer": "欧洲精品茶贸易商（代号B-EU-007）"
+  },
+  "perception_raw": [
+    {
+      "block_id": "B-3-SE-01",
+      "disease_candidate": "茶炭疽病",
+      "confidence": 0.91,
+      "ndvi_mean": 0.42,
+      "area_mu_estimate": 1.4,
+      "image_path": "data/images/sample_anthracnose_01.jpg"
+    },
+    {
+      "block_id": "B-3-SE-02",
+      "disease_candidate": "茶炭疽病",
+      "confidence": 0.88,
+      "ndvi_mean": 0.45,
+      "area_mu_estimate": 0.7,
+      "image_path": "data/images/sample_anthracnose_02.jpg"
+    }
+  ],
+  "agent_trail": [],
+  "errors": [],
+  "finished": false
+}

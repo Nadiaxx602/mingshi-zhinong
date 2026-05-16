@@ -1,0 +1,69 @@
+{
+  "pesticides": [
+    {
+      "id": "P001",
+      "name": "苯醚甲环唑·吡唑醚菌酯 30%悬浮剂",
+      "active_ingredient": "苯醚甲环唑+吡唑醚菌酯",
+      "registration_no": "PD20191234",
+      "target_diseases": ["茶炭疽病", "茶饼病"],
+      "dilution_ratio": "1:1500",
+      "dose_ml_per_mu": 35,
+      "phi_days": 14,
+      "expected_residue_mg_kg": 0.08,
+      "organic_certified": false,
+      "cost_yuan_per_mu": 18
+    },
+    {
+      "id": "P002",
+      "name": "嘧菌酯 25%悬浮剂",
+      "active_ingredient": "嘧菌酯",
+      "registration_no": "PD20180567",
+      "target_diseases": ["茶炭疽病", "茶云纹叶枯病"],
+      "dilution_ratio": "1:1200",
+      "dose_ml_per_mu": 40,
+      "phi_days": 10,
+      "expected_residue_mg_kg": 0.15,
+      "organic_certified": false,
+      "cost_yuan_per_mu": 22
+    },
+    {
+      "id": "P003",
+      "name": "代森锰锌 80%可湿性粉剂",
+      "active_ingredient": "代森锰锌",
+      "registration_no": "PD20100234",
+      "target_diseases": ["茶炭疽病", "茶饼病", "茶云纹叶枯病"],
+      "dilution_ratio": "1:600",
+      "dose_ml_per_mu": 120,
+      "phi_days": 21,
+      "expected_residue_mg_kg": 0.55,
+      "organic_certified": false,
+      "cost_yuan_per_mu": 12
+    },
+    {
+      "id": "P004",
+      "name": "苦参碱 0.5%水剂（生物源）",
+      "active_ingredient": "苦参碱",
+      "registration_no": "PD20151024",
+      "target_diseases": ["茶炭疽病", "茶小绿叶蝉"],
+      "dilution_ratio": "1:800",
+      "dose_ml_per_mu": 90,
+      "phi_days": 5,
+      "expected_residue_mg_kg": 0.02,
+      "organic_certified": true,
+      "cost_yuan_per_mu": 25
+    },
+    {
+      "id": "P005",
+      "name": "波尔多液（矿物源）",
+      "active_ingredient": "硫酸铜+石灰",
+      "registration_no": "PD20081157",
+      "target_diseases": ["茶炭疽病", "茶饼病"],
+      "dilution_ratio": "1:200",
+      "dose_ml_per_mu": 200,
+      "phi_days": 7,
+      "expected_residue_mg_kg": 0.30,
+      "organic_certified": true,
+      "cost_yuan_per_mu": 8
+    }
+  ]
+}

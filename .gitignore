@@ -1,0 +1,23 @@
+venv/
+.env
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+
+# Python output: 仅保留 trace_caseB.json（前端 fetch 用），其他 .json 都忽略
+output/*.json
+!output/trace_caseB.json
+
+# 历次改版备份不入库
+index.html.*.bak
+
+# 临时测试脚本
+_test_*.py
+
+# Claude Code 本地配置
+.claude/
+
+# 内部任务规格（含赛事策略与设计文档，不公开）
+TASK_PACKAGE_*.md
+

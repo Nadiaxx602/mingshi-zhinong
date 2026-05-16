@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>茗视智农 · 山地茶园多Agent协同决策系统</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            /* 深森林绿农业工业风 - John Deere Ops Center / Climate FieldView 气质 */
+            foundry: '#4A6B3A',          /* deep-leaf-green · 主品牌色 */
+            'foundry-hover': '#3D5930',
+            moss: '#87A96B',              /* sprout-green · 健康/通过 */
+            'moss-soft': '#87A96B',
+            gold: '#D4A574',              /* wheat-yellow · 警告/观察 */
+            'gold-hover': '#BE9163',
+            brew: '#C8741E',              /* tea-brew-orange · HIL 签字/重点 CTA */
+            'brew-hover': '#A85F18',
+            brick: '#8B3A2E',             /* roasted-tea-red · 危险/病害 */
+            base: '#1A1F1A',              /* forest-deep · 主背景 */
+            card: '#242A24',              /* forest-medium · 卡片 */
+            inset: '#2E3530',             /* forest-light · 内嵌/modal */
+            term: '#0A0D0A',              /* terminal 抽屉 */
+            meta: '#0F1310',              /* meta bar */
+            cream: '#F5F0E1',             /* 反白文字 (按钮上) */
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+            display: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+      background: #1A1F1A;
+      color: rgba(245,240,225,0.92);
+    }
+    .font-display { font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+    .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* 文字四档（cream 系，避免纯白冷感） */
+    .text-pri  { color: rgba(245,240,225,0.92); }
+    .text-sec  { color: rgba(245,240,225,0.62); }
+    .text-ter  { color: rgba(245,240,225,0.42); }
+    .text-mute { color: rgba(245,240,225,0.25); }
+
+    /* 分隔线 8% cream */
+    .border-div { border-color: rgba(245,240,225,0.08); }
+
+    /* 版本水印：低对比度，hover 提亮 */
+    .text-mark { color: rgba(245,240,225,0.30); transition: color 0.2s; }
+    .text-mark:hover { color: rgba(245,240,225,0.60); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 60% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    .pulse-soft { animation: pulseSoft 1.4s ease-in-out infinite; }
+    .slide-in-right { animation: slideInRight 0.35s ease-out forwards; }
+    .bounce-in { animation: bounce-in 0.5s ease-out forwards; }
+
+    /* 数字孪生网格：深色基底 + 单色状态 */
+    .twin-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+    .twin-cell { aspect-ratio: 1; border-radius: 6px; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; }
+    .twin-cell-normal { background: #2E3530; border: 1px solid rgba(245,240,225,0.06); }
+    .twin-cell-anomaly { background: rgba(139,58,46,0.18); border: 1px solid #8B3A2E; box-shadow: 0 0 12px rgba(139,58,46,0.35); animation: pulseSoft 2s ease-in-out infinite; }
+    .twin-cell-warning { background: rgba(212,165,116,0.14); border: 1px solid #D4A574; }
+
+    /* 全暗色化的"微信"视图 */
+    .wechat-bg { background: #1A1F1A; min-height: 100vh; }
+    .wechat-bubble-system { background: #2E3530; border: 1px solid rgba(245,240,225,0.08); border-radius: 8px; padding: 10px 14px; max-width: 80%; display: inline-block; color: rgba(245,240,225,0.92); }
+
+    /* 滚动条：暗色化 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1A1F1A; }
+    ::-webkit-scrollbar-thumb { background: #2E3530; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3D4538; }
+
+    .check-item { transition: all 0.5s ease; opacity: 0.4; }
+    .check-item.checked { opacity: 1; }
+    .check-item.checking { opacity: 1; }
+
+    .conv-flow::-webkit-scrollbar-thumb { background: #3D4538; }
+
+    /* 表单元素暗色 */
+    input, select { color-scheme: dark; }
+    input::placeholder { color: rgba(245,240,225,0.32); }
+
+    /* 工业级 logo 标识 */
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Lucide 默认 stroke-width 调细一点，更工业 */
+    [data-lucide] { stroke-width: 1.75; }
+
+    /* Terminal 日志行 */
+    .term-line { white-space: pre; font-variant-ligatures: none; line-height: 1.5; }
+
+    /* ============ 数字孪生地图组件 ============ */
+    .parcel {
+      transition: fill-opacity 0.2s ease, cursor 0.2s ease;
+      cursor: pointer;
+    }
+    .parcel:hover {
+      fill-opacity: 0.8 !important;
+    }
+    .tgs-node {
+      transition: transform 0.2s ease;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    .tgs-node:hover {
+      transform: scale(1.5);
+    }
+    @keyframes flowPath {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -20; }
+    }
+    .flight-path path {
+      animation: flowPath 1s linear infinite;
+    }
+
+    /* Tab 切换器 */
+    .twin-tab {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(245,240,225,0.62);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+      background: transparent;
+    }
+    .twin-tab:hover { color: rgba(245,240,225,0.92); }
+    .twin-tab.active {
+      color: #87A96B;
+      border-bottom-color: #87A96B;
+    }
+
+    /* ============ 登录页背景 + 启动序列 ============ */
+    .login-bg {
+      background: linear-gradient(rgba(15,19,16,0.72), rgba(15,19,16,0.88)), url('assets/login-bg.png');
+      background-size: cover;
+      background-position: center;
+    }
+    .boot-bg {
+      background: linear-gradient(rgba(10,13,10,0.92), rgba(10,13,10,0.97)), url('assets/login-bg.png');
+      background-size: cover;
+      background-position: center;
+    }
+    .boot-line {
+      opacity: 0;
+      transform: translateX(-8px);
+      animation: bootLineIn 0.3s ease forwards;
+    }
+    @keyframes bootLineIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-base">
+
+<div x-data="app()" x-init="init()" class="min-h-screen">
+
+  <!-- ============================================================ -->
+  <!-- LOGIN SCREEN                                                  -->
+  <!-- ============================================================ -->
+  <div x-show="view === 'login'" x-transition.opacity.duration.300ms class="login-bg min-h-screen flex items-center justify-center p-4 relative">
+    <div class="bg-[#1A1F1A]/75 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 max-w-md w-full fade-in relative z-10">
+      <div class="text-center mb-8">
+        <div class="brand-mark w-12 h-12 bg-foundry rounded-lg mb-4 mx-auto text-cream">
+          <i data-lucide="leaf" class="w-6 h-6"></i>
+        </div>
+        <h1 class="font-display text-2xl text-pri">茗视智农</h1>
+        <p class="text-sm text-sec mt-1">山地茶园多Agent协同决策系统</p>
+        <p class="text-xs text-ter mt-1 font-mono">DEMO · v1.0.0-beta</p>
+        <!-- 系统状态指示行 -->
+        <div class="flex items-center justify-center gap-2 text-[10px] font-mono text-white/50 mt-3">
+          <span class="text-[#87A96B]">●</span>
+          <span>智能体集群在线</span>
+          <span class="text-white/25">·</span>
+          <span>API 正常</span>
+          <span class="text-white/25">·</span>
+          <span>v1.0.0-beta</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-6">
+        <label class="block text-sm font-medium text-sec mb-2">选择角色</label>
+        <template x-for="r in roles" :key="r.id">
+          <button
+            @click="role = r.id"
+            :class="role === r.id ? 'ring-1 ring-foundry bg-foundry/10 border-foundry/40' : 'bg-inset border-div hover:border-white/20'"
+            class="w-full text-left p-3 rounded-lg border transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-md bg-base flex items-center justify-center text-sec">
+                <i :data-lucide="r.icon" class="w-4 h-4"></i>
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-pri text-sm" x-text="r.name"></div>
+                <div class="text-xs text-sec" x-text="r.desc"></div>
+              </div>
+              <span class="font-mono text-[10px] text-ter" x-text="r.tag"></span>
+            </div>
+          </button>
+        </template>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-sec mb-2" x-text="roleLabel"></label>
+        <input
+          x-model="userId"
+          @keyup.enter="login()"
+          type="text"
+          :placeholder="rolePlaceholder"
+          class="w-full px-4 py-3 bg-inset border border-div rounded-lg focus:ring-1 focus:ring-foundry focus:border-foundry outline-none transition-all text-pri font-mono">
+      </div>
+
+      <button
+        @click="login()"
+        class="w-full bg-foundry hover:bg-foundry-hover text-cream py-3 rounded-lg font-medium transition-all">
+        登 录
+      </button>
+
+      <div class="mt-6 pt-6 border-t border-div text-xs text-sec">
+        <p class="mb-2 font-medium text-pri">演示账号</p>
+        <p class="font-mono">· 茶农工号：ZHANG001</p>
+        <p class="font-mono">· 管理号：ADMIN888</p>
+        <p class="font-mono">· 演示模式：DEMO000</p>
+      </div>
+    </div>
+
+    <!-- 左上角项目标识 -->
+    <div class="fixed top-4 left-5 text-white/70 font-medium tracking-wide select-none">
+      茗视智农 <span class="text-white/35 text-xs ml-1">MingShi ZhiNong</span>
+    </div>
+
+    <!-- 右下角版本水印 -->
+    <div class="fixed bottom-3 right-4 text-[10px] font-mono text-white/30 select-none">
+      茗视智农 · 演示原型 v1.0.0-beta · build 2026-05-15 · a7c3f8e
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BOOT SEQUENCE (登录过渡动画 · 跨登录与目标 view 之间)             -->
+  <!-- ============================================================ -->
+  <div x-show="bootingUp"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       class="boot-bg fixed inset-0 z-[100] flex items-center justify-center">
+    <div class="w-[420px] max-w-[90vw] font-mono text-[12px]">
+      <div class="text-white/80 mb-4 flex items-center gap-2">
+        <span class="text-[#87A96B] animate-pulse">●</span>
+        <span>系统初始化中...</span>
+      </div>
+      <div class="space-y-2.5">
+        <div class="boot-line" style="animation-delay: 0ms">
+          <span class="text-[#87A96B]">[████████]</span>
+          <span class="text-white/70 ml-2">验证身份凭证</span>
+          <span class="text-[#87A96B] ml-2">✓</span>
+        </div>
+        <div class="boot-line" style="animation-delay: 350ms">
+          <span class="text-[#87A96B]">[████████]</span>
+          <span class="text-white/70 ml-2">连接多智能体集群 (5/5 在线)</span>
+          <span class="text-[#87A96B] ml-2">✓</span>
+        </div>
+        <div class="boot-line" style="animation-delay: 700ms">
+          <span class="text-[#87A96B]">[████████]</span>
+          <span class="text-white/70 ml-2">加载数字孪生引擎</span>
+          <span class="text-[#87A96B] ml-2">✓</span>
+        </div>
+        <div class="boot-line" style="animation-delay: 1050ms">
+          <span class="text-[#87A96B]">[████████]</span>
+          <span class="text-white/70 ml-2">同步 K230 边缘节点</span>
+          <span class="text-[#87A96B] ml-2">✓</span>
+        </div>
+        <div class="boot-line" style="animation-delay: 1400ms">
+          <span class="text-[#C8741E]">[ READY ]</span>
+          <span class="text-white/90 ml-2 font-medium">系统就绪</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- DEMO MODE - 五Agent协同主界面                                  -->
+  <!-- ============================================================ -->
+  <div x-show="view === 'demo'" x-transition.opacity.duration.300ms class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-card border-b border-div px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="brand-mark w-9 h-9 bg-foundry rounded-md text-cream">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="font-display text-pri text-sm">茗视智农 · 五Agent协同决策系统</h1>
+          <p class="text-xs text-sec">演示模式 · <span class="font-mono text-ter" x-text="userId || 'DEMO000'"></span></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-inset border border-div rounded-md px-3 py-1.5">
+          <span class="text-xs text-sec">演示速度</span>
+          <select x-model="speed" class="text-xs bg-transparent border-0 outline-none cursor-pointer text-pri">
+            <option value="2" class="bg-inset">慢速</option>
+            <option value="1" class="bg-inset">标准</option>
+            <option value="0.5" class="bg-inset">快速</option>
+          </select>
+        </div>
+
+        <button
+          @click="startDemo()"
+          :disabled="isPlaying"
+          :class="isPlaying ? 'bg-inset text-ter cursor-not-allowed' : 'bg-foundry hover:bg-foundry-hover text-cream'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2">
+          <i :data-lucide="isPlaying ? 'loader-2' : 'play'" :class="isPlaying ? 'w-4 h-4 animate-spin' : 'w-4 h-4'"></i>
+          <span x-text="isPlaying ? '运行中...' : '运行 Case B'"></span>
+        </button>
+
+        <button @click="reset()" class="px-3 py-2 bg-inset hover:border-white/20 border border-div text-sec rounded-md text-xs transition-all flex items-center gap-1.5" title="重置">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>RESET</span>
+        </button>
+        <button @click="logout()" class="text-xs text-sec hover:text-pri">退出</button>
+      </div>
+    </header>
+
+    <!-- ============== META BAR (新增任务2) ============== -->
+    <div class="bg-meta border-b border-div px-6 h-8 flex items-center text-[11px] font-mono text-sec">
+      <span>trace_id <span class="text-pri" x-text="traceId"></span></span>
+      <span class="text-mute mx-3">·</span>
+      <span>session <span class="text-pri" x-text="sessionId"></span></span>
+      <span class="text-mute mx-3">·</span>
+      <span>agents <span class="text-pri"><span x-text="agentsActive"></span>/5</span> active</span>
+      <span class="text-mute mx-3">·</span>
+      <span>tokens <span class="text-pri" x-text="tokenCountFmt"></span></span>
+      <span class="text-mute mx-3">·</span>
+      <span>latency p95 <span class="text-pri" x-text="latencyP95Fmt"></span></span>
+      <span class="ml-auto text-ter">v1.0.0-beta · build 2026-05-15</span>
+    </div>
+
+    <!-- Case Info Bar -->
+    <div class="bg-card border-b border-div px-6 py-2 text-xs text-sec flex items-center gap-6 flex-wrap">
+      <span class="font-medium"><span class="text-foundry font-mono">CASE B</span> · 欧盟MRL出口订单场景</span>
+      <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3 h-3"></i>地块 <span class="font-mono text-pri">B-3</span></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="sprout" class="w-3 h-3"></i>品种 <span class="text-pri">金牡丹</span></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="mountain" class="w-3 h-3"></i>海拔 <span class="font-mono text-pri">850 m</span></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="dollar-sign" class="w-3 h-3"></i>订单 <span class="font-mono text-pri">5000 kg × ¥380 = ¥1,900,000</span></span>
+      <span class="flex items-center gap-1.5"><i data-lucide="globe" class="w-3 h-3"></i>买家 欧洲精品茶贸易商</span>
+    </div>
+
+    <!-- Three Column Layout -->
+    <div class="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden" style="min-height: 0;">
+
+      <!-- LEFT: Tea Garden Twin -->
+      <div class="col-span-3 bg-card rounded-lg border border-div p-4 flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display text-pri text-sm flex items-center gap-2">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-foundry"></i>
+            <span>茶园数字孪生</span>
+          </h2>
+          <span class="text-[10px] font-mono text-ter">TWIN/2D</span>
+        </div>
+
+        <!-- ============ Tab 切换器 ============ -->
+        <div class="flex gap-0 border-b border-div mb-3 -mx-1">
+          <button @click="twinTab = 'realtime';  refreshIcons()" :class="twinTab === 'realtime'  ? 'twin-tab active' : 'twin-tab'">实时态势</button>
+          <button @click="twinTab = 'satellite'; refreshIcons()" :class="twinTab === 'satellite' ? 'twin-tab active' : 'twin-tab'">卫星底图</button>
+          <button @click="twinTab = 'grid';      refreshIcons()" :class="twinTab === 'grid'      ? 'twin-tab active' : 'twin-tab'">简化网格</button>
+        </div>
+
+        <!-- ============ Tab 1: 实时态势 (新孪生地图组件) ============ -->
+        <div x-show="twinTab === 'realtime'" class="fade-in">
+          <div class="relative aspect-[4/3] rounded-lg overflow-hidden border border-white/10">
+
+            <!-- 层 1: 底图 -->
+            <img src="assets/twin-map-bg.png"
+                 alt="茶园数字孪生底图"
+                 class="absolute inset-0 w-full h-full object-cover"
+                 style="filter: brightness(0.55) saturate(0.7);" />
+
+            <!-- 层 2: 深色蒙版 -->
+            <div class="absolute inset-0 bg-[#1A1F1A]/40 pointer-events-none"></div>
+
+            <!-- 层 3: SVG 矢量层 -->
+            <svg class="absolute inset-0 w-full h-full"
+                 viewBox="0 0 800 600"
+                 preserveAspectRatio="none"
+                 style="pointer-events: auto;">
+
+              <defs>
+                <radialGradient id="diseaseHot">
+                  <stop offset="0%"   stop-color="#FFB300" stop-opacity="0.95"/>
+                  <stop offset="20%"  stop-color="#FF6B00" stop-opacity="0.75"/>
+                  <stop offset="50%"  stop-color="#FF3300" stop-opacity="0.45"/>
+                  <stop offset="80%"  stop-color="#FF1500" stop-opacity="0.18"/>
+                  <stop offset="100%" stop-color="#FF0000" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="hotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <!-- 地块边缘羽化滤镜 (用于多边形组) -->
+                <filter id="parcelSoft" x="-5%" y="-5%" width="110%" height="110%">
+                  <feGaussianBlur stdDeviation="1.8"/>
+                </filter>
+              </defs>
+
+              <!-- ============ 地块羽化组：18 个多边形统一应用 parcelSoft 滤镜 ============ -->
+              <g filter="url(#parcelSoft)">
+              <!-- 红色严重区 (3 个，紧密相邻) -->
+              <polygon points="400,300 460,300 470,360 410,360"
+                fill="#C2410C" fill-opacity="0.78" class="parcel parcel-red"/>
+              <polygon points="460,300 530,305 540,360 470,360"
+                fill="#C2410C" fill-opacity="0.7"                class="parcel parcel-red"/>
+              <polygon points="410,360 470,360 480,420 415,420"
+                fill="#C2410C" fill-opacity="0.65"                class="parcel parcel-red"/>
+
+              <!-- 黄色观察区 (5 个，包围红色区) -->
+              <polygon points="340,260 400,260 400,300 350,310"
+                fill="#D4A574" fill-opacity="0.6"                class="parcel parcel-yellow"/>
+              <polygon points="400,260 470,265 460,300 400,300"
+                fill="#D4A574" fill-opacity="0.6"                class="parcel parcel-yellow"/>
+              <polygon points="470,265 540,265 530,305 460,300"
+                fill="#D4A574" fill-opacity="0.6"                class="parcel parcel-yellow"/>
+              <polygon points="540,305 605,310 600,365 540,360"
+                fill="#D4A574" fill-opacity="0.55"                class="parcel parcel-yellow"/>
+              <polygon points="470,420 540,420 535,475 475,475"
+                fill="#D4A574" fill-opacity="0.55"                class="parcel parcel-yellow"/>
+
+              <!-- 绿色健康区 (10 个，分布在外围) -->
+              <polygon points="260,220 340,225 340,260 270,270"
+                fill="#87A96B" fill-opacity="0.55"                class="parcel parcel-green"/>
+              <polygon points="540,225 620,230 610,265 540,265"
+                fill="#87A96B" fill-opacity="0.55"                class="parcel parcel-green"/>
+              <polygon points="620,230 695,240 695,310 610,310"
+                fill="#87A96B" fill-opacity="0.5"                class="parcel parcel-green"/>
+              <polygon points="605,310 695,310 695,375 600,365"
+                fill="#87A96B" fill-opacity="0.5"                class="parcel parcel-green"/>
+              <polygon points="180,290 270,300 280,360 190,360"
+                fill="#87A96B" fill-opacity="0.55"                class="parcel parcel-green"/>
+              <polygon points="280,310 350,310 410,360 350,365 280,360"
+                fill="#87A96B" fill-opacity="0.55"                class="parcel parcel-green"/>
+              <polygon points="190,360 280,360 290,430 200,430"
+                fill="#87A96B" fill-opacity="0.5"                class="parcel parcel-green"/>
+              <polygon points="280,365 415,420 415,480 285,475"
+                fill="#87A96B" fill-opacity="0.5"                class="parcel parcel-green"/>
+              <polygon points="540,420 605,420 600,475 535,475"
+                fill="#87A96B" fill-opacity="0.5"                class="parcel parcel-green"/>
+              <polygon points="600,420 685,425 680,485 600,475"
+                fill="#87A96B" fill-opacity="0.5" class="parcel parcel-green"/>
+              </g><!-- /地块羽化组 -->
+
+              <!-- 病害爆发热力斑 (聚焦版：长条形 ellipse + 双高亮核心，增强自然感) -->
+              <g filter="url(#hotGlow)">
+                <!-- 长条主体：rx > ry, 沿水平方向延伸覆盖 3 个红色多边形 -->
+                <ellipse cx="455" cy="360" rx="85" ry="32" fill="url(#diseaseHot)">
+                  <animate attributeName="rx"      values="80;95;80"     dur="2.5s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.85;1;0.85"  dur="2.5s" repeatCount="indefinite"/>
+                </ellipse>
+                <!-- 双高亮核心：模拟参考图中央两团灼热点 -->
+                <circle cx="435" cy="358" r="14" fill="#FFC233" fill-opacity="0.72">
+                  <animate attributeName="r"       values="12;17;12" dur="2.2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.65;0.85;0.65" dur="2.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="475" cy="362" r="11" fill="#FFC233" fill-opacity="0.65">
+                  <animate attributeName="r"       values="10;14;10" dur="2.8s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.55;0.78;0.55" dur="2.8s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+
+              <!-- 无人机飞行路径 (4 段简洁版，覆盖异常区上方) -->
+              <g stroke="#87CEEB" stroke-width="1.5" stroke-dasharray="6,4" fill="none" opacity="0.7" class="flight-path">
+                <path d="M 320,250 L 600,250"/>
+                <path d="M 600,275 L 320,275"/>
+                <path d="M 320,300 L 600,300"/>
+                <path d="M 600,325 L 320,325"/>
+              </g>
+              <g fill="#87CEEB">
+                <circle cx="600" cy="250" r="3"/>
+                <circle cx="320" cy="275" r="3"/>
+                <circle cx="600" cy="300" r="3"/>
+                <circle cx="320" cy="325" r="3"/>
+              </g>
+
+              <!-- 12 个 TGS 传感器节点 -->
+              <g class="tgs-node">
+                <circle cx="180" cy="150" r="4" fill="#87A96B"/>
+                <circle cx="180" cy="150" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="310" cy="180" r="4" fill="#87A96B"/>
+                <circle cx="310" cy="180" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="430" cy="160" r="4" fill="#87A96B"/>
+                <circle cx="430" cy="160" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="550" cy="140" r="4" fill="#87A96B"/>
+                <circle cx="550" cy="140" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="680" cy="170" r="4" fill="#87A96B"/>
+                <circle cx="680" cy="170" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="200" cy="320" r="4" fill="#87A96B"/>
+                <circle cx="200" cy="320" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="350" cy="340" r="4" fill="#87A96B"/>
+                <circle cx="350" cy="340" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="520" cy="310" r="4" fill="#87A96B"/>
+                <circle cx="520" cy="310" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="650" cy="360" r="4" fill="#87A96B"/>
+                <circle cx="650" cy="360" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="230" cy="500" r="4" fill="#87A96B"/>
+                <circle cx="230" cy="500" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="400" cy="510" r="4" fill="#87A96B"/>
+                <circle cx="400" cy="510" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <g class="tgs-node">
+                <circle cx="580" cy="520" r="4" fill="#87A96B"/>
+                <circle cx="580" cy="520" r="4" fill="#87A96B" opacity="0.4">
+                  <animate attributeName="r"       values="4;12;4"   dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+
+              <!-- B-3 地块标注 (跟随新热力中心 455,360) -->
+              <g>
+                <circle cx="455" cy="360" r="6" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+                <line x1="455" y1="360" x2="475" y2="335" stroke="#FFFFFF" stroke-width="1.5"/>
+                <text x="480" y="330" fill="#FFFFFF" font-size="14" font-family="Inter" font-weight="500">B-3</text>
+              </g>
+            </svg>
+
+            <!-- 浮层 C: 顶部信息条 -->
+            <div class="absolute left-3 top-3 right-32 bg-[#0A0D0A]/60 backdrop-blur-sm rounded px-3 py-1.5 flex items-center justify-between text-[11px] font-mono">
+              <div class="flex items-center gap-3">
+                <span class="text-[#87A96B]">●</span>
+                <span class="text-white/70">B-3 地块</span>
+                <span class="text-white/30">·</span>
+                <span class="text-white/70">8.6 亩</span>
+                <span class="text-white/30">·</span>
+                <span class="text-white/70">海拔 850m</span>
+              </div>
+              <div class="text-white/60">
+                最后更新: <span class="text-white/85" x-text="twinLastUpdate">14:32:07</span>
+              </div>
+            </div>
+
+            <!-- 浮层 B: 右上角工具栏 -->
+            <div class="absolute right-3 top-3 flex gap-1.5">
+              <button class="w-7 h-7 bg-[#0A0D0A]/85 backdrop-blur-sm border border-white/10 rounded flex items-center justify-center hover:bg-[#0A0D0A] transition" title="天气图层">
+                <i data-lucide="cloud" class="w-3.5 h-3.5 text-white/70"></i>
+              </button>
+              <button class="w-7 h-7 bg-[#0A0D0A]/85 backdrop-blur-sm border border-white/10 rounded flex items-center justify-center hover:bg-[#0A0D0A] transition" title="全屏">
+                <i data-lucide="maximize" class="w-3.5 h-3.5 text-white/70"></i>
+              </button>
+              <button class="w-7 h-7 bg-[#0A0D0A]/85 backdrop-blur-sm border border-white/10 rounded flex items-center justify-center hover:bg-[#0A0D0A] transition" title="定位">
+                <i data-lucide="locate" class="w-3.5 h-3.5 text-white/70"></i>
+              </button>
+              <button class="w-7 h-7 bg-[#0A0D0A]/85 backdrop-blur-sm border border-white/10 rounded flex items-center justify-center hover:bg-[#0A0D0A] transition" title="刷新">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-white/70"></i>
+              </button>
+            </div>
+
+            <!-- 浮层 A: 左下角图例 -->
+            <div class="absolute left-3 bottom-3 bg-[#0A0D0A]/85 backdrop-blur-sm rounded p-3 text-[10px] text-white/80 space-y-1.5 border border-white/10">
+              <div class="font-medium text-white/95 mb-1.5">图例</div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-[#C2410C]/60 border border-[#FF6347] rounded-sm"></div>
+                <span>严重病害</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-[#D4A574]/55 border border-[#E5BC85] rounded-sm"></div>
+                <span>警示观察</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-[#87A96B]/50 border border-[#A5C28D] rounded-sm"></div>
+                <span>健康正常</span>
+              </div>
+              <div class="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1.5">
+                <div class="w-2 h-2 rounded-full bg-[#87A96B]"></div>
+                <span>TGS 节点 · 12 在线</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 border-t border-dashed border-[#87CEEB]"></div>
+                <span>无人机航线</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部状态条 (地图 div 外部，下方紧贴) -->
+          <div class="mt-2 flex items-center justify-between text-[11px] font-mono px-2 py-1">
+            <div class="flex items-center gap-2.5 text-white/60">
+              <span>异常: <span class="text-[#FF6347]">1处</span></span>
+              <span class="text-white/30">·</span>
+              <span>观察: <span class="text-[#E5BC85]">3处</span></span>
+              <span class="text-white/30">·</span>
+              <span>节点在线: <span class="text-[#A5C28D]">12/12</span></span>
+            </div>
+            <button class="text-white/40 hover:text-white/70 transition">展开详情 →</button>
+          </div>
+        </div>
+
+        <!-- ============ Tab 2: 卫星底图 (纯底图，无矢量叠加) ============ -->
+        <div x-show="twinTab === 'satellite'" class="fade-in">
+          <div class="relative aspect-[4/3] rounded-lg overflow-hidden border border-white/10">
+            <img src="assets/twin-map-bg.png"
+                 alt="茶园卫星底图"
+                 class="absolute inset-0 w-full h-full object-cover" />
+            <div class="absolute left-3 top-3 bg-[#0A0D0A]/85 backdrop-blur-sm rounded px-2 py-1 text-[10px] font-mono text-white/70">
+              SATELLITE · 2026-05-15 09:00
+            </div>
+          </div>
+          <p class="text-[11px] text-sec mt-2 px-2 font-mono">来源 · 风云三号 + Sentinel-2 融合 · 分辨率 1.5m/px</p>
+        </div>
+
+        <!-- ============ Tab 3: 简化网格 (保留原 4×6 视图) ============ -->
+        <div x-show="twinTab === 'grid'" class="fade-in">
+          <p class="text-xs text-sec mb-3">B-3 地块 · 4×6 栅格简化视图</p>
+
+          <div class="twin-grid mb-4">
+            <template x-for="cell in twinGrid" :key="cell.id">
+              <div :class="cellClass(cell)" class="twin-cell">
+                <span class="text-[10px] text-ter font-mono" x-text="cell.label"></span>
+              </div>
+            </template>
+          </div>
+
+          <div class="space-y-1.5 text-xs mb-3">
+            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded twin-cell-normal"></div><span class="text-sec">正常区域</span></div>
+            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded twin-cell-warning"></div><span class="text-sec">观察区域</span></div>
+            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded twin-cell-anomaly"></div><span class="text-sec">异常区域（病害）</span></div>
+          </div>
+
+          <div x-show="anomalies.length > 0" class="p-3 bg-brick/10 rounded-md border border-brick/40 fade-in">
+            <p class="text-xs font-medium text-brick mb-1 flex items-center gap-1.5">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+              <span>检出异常</span>
+            </p>
+            <template x-for="a in anomalies"><p class="text-xs text-pri" x-text="a"></p></template>
+          </div>
+
+          <div x-show="!anomalies.length" class="p-3 bg-inset rounded-md border border-div">
+            <p class="text-xs text-sec flex items-center gap-1.5">
+              <i data-lucide="circle" class="w-3 h-3"></i>
+              <span>等待巡检任务启动</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE: Agent Timeline -->
+      <div class="col-span-4 bg-card rounded-lg border border-div p-4 overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display text-pri text-sm flex items-center gap-2">
+            <i data-lucide="cpu" class="w-4 h-4 text-foundry"></i>
+            <span>五Agent 协同时间线</span>
+          </h2>
+          <span class="text-[10px] font-mono text-ter">PIPELINE</span>
+        </div>
+
+        <div class="space-y-3">
+          <template x-for="agent in agentList" :key="agent.id">
+            <div :class="agentCardClass(agent.id)" class="flex items-start gap-3 p-3 rounded-md border transition-all">
+              <!-- Agent 专属图标 + 状态徽章组合 -->
+              <div class="relative flex-shrink-0">
+                <div :class="agentIconBg(agent.id)" class="w-9 h-9 rounded-md flex items-center justify-center transition-all">
+                  <i :data-lucide="agent.icon" :class="agentStatus(agent.id) === 'pending' ? 'w-4 h-4 text-mute' : 'w-4 h-4 text-cream'"></i>
+                </div>
+                <!-- 状态徽章右下角 -->
+                <div class="absolute -right-1 -bottom-1 w-4 h-4 rounded-full bg-card border border-card flex items-center justify-center">
+                  <i x-show="agentStatus(agent.id) === 'pending'" data-lucide="circle" class="w-3 h-3 text-mute"></i>
+                  <i x-show="agentStatus(agent.id) === 'active'" data-lucide="loader-2" class="w-3 h-3 text-foundry animate-spin"></i>
+                  <i x-show="agentStatus(agent.id) === 'done'" data-lucide="check" class="w-3 h-3 text-moss"></i>
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-medium text-pri text-sm" x-text="agent.name"></h3>
+                  <span x-show="agent.duration" class="text-xs text-ter font-mono" x-text="agent.duration"></span>
+                </div>
+                <p class="text-xs text-sec mt-0.5" x-text="agent.role"></p>
+                <p x-show="agent.summary" class="text-xs text-pri mt-2" x-text="agent.summary"></p>
+
+                <!-- ============== AGENT MINI METRICS (任务5) ============== -->
+                <div x-show="agentStatus(agent.id) === 'done'" class="text-[10px] font-mono text-ter mt-2 flex gap-3 fade-in">
+                  <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i><span x-text="agent.tokens"></span> tokens</span>
+                  <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i><span x-text="agent.latency"></span></span>
+                  <span class="flex items-center gap-1"><i data-lucide="wrench" class="w-3 h-3"></i><span x-text="agent.toolCalls"></span> tools</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- RIGHT: Current Agent Detail -->
+      <div class="col-span-5 bg-card rounded-lg border border-div p-4 overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display text-pri text-sm flex items-center gap-2">
+            <i data-lucide="file-text" class="w-4 h-4 text-foundry"></i>
+            <span>当前 Agent 详细工作</span>
+          </h2>
+          <span class="text-[10px] font-mono text-ter">DETAIL</span>
+        </div>
+
+        <!-- Idle state -->
+        <div x-show="!currentAgent && !isCompleted" class="text-center py-16 text-ter">
+          <i data-lucide="play-circle" class="w-12 h-12 mx-auto mb-3 text-mute"></i>
+          <p class="text-sm text-sec">点击「运行 Case B」启动协同流程</p>
+          <p class="text-xs mt-2 text-ter">五个 Agent 将依次完成感知→诊断→溯源→决策→报告全链路</p>
+        </div>
+
+        <!-- Active agent -->
+        <div x-show="currentAgent && !isCompleted" class="space-y-4 fade-in">
+          <div class="flex items-start justify-between border-b border-div pb-3">
+            <div>
+              <h3 class="font-display text-foundry flex items-center gap-2">
+                <i :data-lucide="currentAgent?.icon || 'cpu'" class="w-4 h-4"></i>
+                <span x-text="currentAgent?.name"></span>
+              </h3>
+              <p class="text-xs text-sec mt-1" x-text="currentAgent?.role"></p>
+            </div>
+            <div class="text-xs px-2.5 py-1 bg-foundry/15 text-foundry rounded font-medium font-mono flex items-center gap-1.5">
+              <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+              <span>RUNNING</span>
+            </div>
+          </div>
+          <div x-html="currentDetailHTML"></div>
+
+          <!-- Compliance progress -->
+          <div x-show="showComplianceProgress" class="space-y-2 mt-4 p-3 bg-inset rounded-md border border-gold/40">
+            <h4 class="text-sm font-medium text-pri mb-3 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-gold"></i>
+                <span>确定性合规求解器</span>
+              </span>
+              <span class="text-[10px] font-mono text-gold">SOLVER</span>
+            </h4>
+            <template x-for="check in complianceChecks" :key="check.label">
+              <div :class="check.status === 'checked' ? 'checked text-moss' : (check.status === 'checking' ? 'checking text-gold' : 'text-ter')" class="check-item flex items-center gap-2 text-sm py-1">
+                <i x-show="check.status === 'checked'" data-lucide="check" class="w-4 h-4 text-moss"></i>
+                <i x-show="check.status === 'checking'" data-lucide="loader-2" class="w-4 h-4 text-gold animate-spin"></i>
+                <i x-show="check.status === ''" data-lucide="circle" class="w-4 h-4 text-mute"></i>
+                <span x-text="check.label"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Completed state -->
+        <div x-show="isCompleted" class="space-y-4 fade-in">
+          <div class="flex items-center gap-2 pb-3 border-b border-div">
+            <div class="w-10 h-10 bg-moss rounded-full flex items-center justify-center text-cream">
+              <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-display text-moss">决策完成</h3>
+              <p class="text-xs text-sec">五Agent协同流程已闭合</p>
+            </div>
+          </div>
+
+          <div class="p-4 bg-inset rounded-md border border-div">
+            <p class="text-xs text-sec mb-2 font-mono">FINAL PRESCRIPTION</p>
+            <p class="font-display text-pri text-sm" x-text="finalPrescription?.pesticide_name"></p>
+            <p class="text-xs text-sec mt-1 font-mono">登记号 <span x-text="finalPrescription?.registration_no || 'PD20191234'"></span></p>
+
+            <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div class="bg-card border border-div rounded p-2.5">
+                <p class="text-ter mb-0.5">稀释倍数</p>
+                <p class="font-bold text-pri font-mono" x-text="finalPrescription?.dilution_ratio"></p>
+              </div>
+              <div class="bg-card border border-div rounded p-2.5">
+                <p class="text-ter mb-0.5">每亩用量</p>
+                <p class="font-bold text-pri font-mono"><span x-text="finalPrescription?.dose_ml_per_mu"></span> ml</p>
+              </div>
+              <div class="bg-card border border-div rounded p-2.5">
+                <p class="text-ter mb-0.5">PHI 安全间隔</p>
+                <p class="font-bold text-pri font-mono"><span x-text="finalPrescription?.phi_days"></span> 天</p>
+              </div>
+              <div class="bg-card border border-div rounded p-2.5">
+                <p class="text-ter mb-0.5">最早采茶日</p>
+                <p class="font-bold text-moss text-xs font-mono" x-text="finalPrescription?.earliest_harvest_date"></p>
+              </div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-div text-xs">
+              <p class="text-ter mb-2 font-mono">COMPLIANCE</p>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2 py-0.5 bg-moss/15 text-moss rounded font-mono flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i>国内 MRL</span>
+                <span class="px-2 py-0.5 bg-moss/15 text-moss rounded font-mono flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i>欧盟 MRL</span>
+                <span class="px-2 py-0.5 bg-moss/15 text-moss rounded font-mono flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i>PHI 达标</span>
+                <span class="px-2 py-0.5 bg-moss/15 text-moss rounded font-mono flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i>非禁用</span>
+              </div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-div text-xs flex justify-between items-center">
+              <span class="text-sec flex items-center gap-1.5"><i data-lucide="pen-tool" class="w-3 h-3"></i>人工签字</span>
+              <span class="font-medium text-brew font-mono" x-text="hilSignature || 'ZHANG001'"></span>
+            </div>
+          </div>
+
+          <button
+            @click="showPersonas = true; refreshIcons()"
+            class="w-full py-3 bg-gold hover:bg-gold-hover text-base rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+            <span>查看三套用户报告</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== TERMINAL LOG DRAWER (任务3) ============== -->
+    <div class="bg-term border-t border-div font-mono text-[11px] transition-all duration-200 flex flex-col flex-shrink-0"
+         :style="logExpanded ? 'height: 12rem;' : 'height: 1.75rem;'">
+      <!-- 顶部 toggle bar -->
+      <div class="h-7 flex-shrink-0 px-4 flex items-center text-[10px] border-b"
+           :class="logExpanded ? 'border-div/60' : 'border-transparent'">
+        <div class="flex items-center gap-2 text-sec flex-shrink-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-foundry" :class="isPlaying ? 'pulse-soft' : ''"></span>
+          <span class="tracking-wider">SYSTEM LOG</span>
+          <span class="text-mute">·</span>
+          <span><span class="text-pri" x-text="logs.length"></span><span class="text-mute"> events</span></span>
+        </div>
+
+        <!-- 收起时显示最新一行 -->
+        <div x-show="!logExpanded && logs.length > 0" class="flex-1 mx-4 truncate text-right">
+          <template x-if="logs.length > 0">
+            <span>
+              <span class="text-foundry" x-text="'[' + logs[logs.length-1].time + ']'"></span>
+              <span class="text-moss mx-1" x-text="'[' + logs[logs.length-1].agent + ']'"></span>
+              <span class="text-sec" x-text="logs[logs.length-1].text"></span>
+            </span>
+          </template>
+        </div>
+
+        <button @click="toggleLog()" class="text-sec hover:text-pri ml-auto flex items-center gap-1">
+          <span x-text="logExpanded ? 'collapse' : 'expand'"></span>
+          <i :data-lucide="logExpanded ? 'chevron-down' : 'chevron-up'" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- 展开时显示完整日志 -->
+      <div x-show="logExpanded" class="flex-1 overflow-y-auto px-4 py-2 conv-flow" id="logFlow">
+        <div class="text-mute italic" x-show="logs.length === 0">[ waiting for events ]</div>
+        <template x-for="log in logs" :key="log.id">
+          <div class="term-line slide-in-right">
+            <span class="text-foundry" x-text="'[' + log.time + ']'"></span><!--
+         --> <span :class="levelColor(log.level)" x-text="'[' + log.level.padEnd(5) + ']'"></span><!--
+         --> <span class="text-moss" x-text="'[' + log.agent.padEnd(14) + ']'"></span><!--
+         --> <span class="text-pri" x-text="log.text"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- HIL Modal -->
+    <div x-show="showHILModal" x-transition.opacity class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-card border border-gold/40 rounded-lg shadow-2xl max-w-md w-full p-6 bounce-in">
+        <div class="flex items-start gap-3 mb-5">
+          <div class="w-12 h-12 bg-gold/15 border border-gold/40 rounded-md flex items-center justify-center flex-shrink-0">
+            <i data-lucide="alert-triangle" class="w-6 h-6 text-gold"></i>
+          </div>
+          <div>
+            <h3 class="font-display text-pri">需要人工签字确认</h3>
+            <p class="text-sm text-sec mt-1">高风险决策已检测，请审核后签字放行</p>
+          </div>
+        </div>
+
+        <div class="bg-inset border border-div rounded-md p-4 mb-4 text-sm space-y-2">
+          <div class="flex justify-between"><span class="text-sec">风险等级</span><span class="font-medium text-brick font-mono">HIGH</span></div>
+          <div class="flex justify-between"><span class="text-sec">触发原因</span><span class="font-medium text-pri text-right">欧盟MRL裕度 &lt; 5%<br><span class="text-xs text-ter">(出口订单高敏)</span></span></div>
+          <div class="flex justify-between"><span class="text-sec">通过合规校验</span><span class="font-medium text-moss font-mono">2 / 4</span></div>
+          <div class="flex justify-between"><span class="text-sec">订单金额</span><span class="font-medium text-pri font-mono">¥1,900,000</span></div>
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-sec mb-2">签字工号</label>
+          <input
+            x-model="hilSignature"
+            @keyup.enter="hilApprove()"
+            type="text"
+            placeholder="例：ZHANG001"
+            class="w-full px-4 py-3 bg-inset border border-div rounded-md focus:ring-1 focus:ring-brew focus:border-brew outline-none text-pri font-mono">
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="hilApprove()"
+            :disabled="!hilSignature"
+            :class="!hilSignature ? 'bg-inset text-ter cursor-not-allowed' : 'bg-brew hover:bg-brew-hover text-cream'"
+            class="flex-1 py-3 rounded-md font-medium transition-all flex items-center justify-center gap-2">
+            <i data-lucide="pen-tool" class="w-4 h-4"></i>
+            <span>签字确认放行</span>
+          </button>
+          <button @click="hilReject()" class="px-5 py-3 bg-inset hover:border-white/20 border border-div text-sec rounded-md font-medium transition-all flex items-center gap-1.5">
+            <i data-lucide="x" class="w-4 h-4"></i>
+            <span>拒绝</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persona Reports Modal -->
+    <div x-show="showPersonas" x-transition.opacity class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div class="bg-card border border-div rounded-lg shadow-2xl max-w-6xl w-full p-6 my-8 bounce-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="font-display text-pri text-xl">三套 Persona 报告</h2>
+            <p class="text-sm text-sec">同一份决策结果 · 三种用户视角</p>
+          </div>
+          <button @click="showPersonas = false" class="text-ter hover:text-pri text-2xl leading-none">×</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <!-- Farmer Card -->
+          <div class="bg-inset rounded-lg p-4 border border-div border-l-2 border-l-foundry">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user" class="w-5 h-5 text-foundry"></i>
+                <div>
+                  <h3 class="font-display text-pri text-sm">茶农版</h3>
+                  <p class="text-xs text-sec">微信小程序 · 方言可选</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono text-foundry">FARMER</span>
+            </div>
+            <div class="bg-card border border-div rounded-md p-4 text-sm leading-relaxed text-pri min-h-[200px]" x-text="reportFarmer"></div>
+            <div class="mt-3 flex gap-2 text-xs">
+              <button class="flex-1 py-2 bg-foundry hover:bg-foundry-hover text-cream rounded flex items-center justify-center gap-1.5">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                <span>方言语音</span>
+              </button>
+              <button class="flex-1 py-2 bg-card border border-div text-sec hover:text-pri rounded flex items-center justify-center gap-1.5">
+                <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                <span>分享</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Manager Card -->
+          <div class="bg-inset rounded-lg p-4 border border-div border-l-2 border-l-gold">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="briefcase" class="w-5 h-5 text-gold"></i>
+                <div>
+                  <h3 class="font-display text-pri text-sm">管理者版</h3>
+                  <p class="text-xs text-sec">KPI 仪表盘</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono text-gold">MANAGER</span>
+            </div>
+            <div class="bg-card border border-div rounded-md p-3 text-xs space-y-2 min-h-[200px]" x-show="reportManager">
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <div class="bg-inset border border-div rounded p-2.5">
+                  <p class="text-ter text-[10px] mb-1">影响面积</p>
+                  <p class="font-bold text-pri font-mono" x-text="(reportManager?.kpi_summary?.affected_area_mu || 2.1) + ' 亩'"></p>
+                </div>
+                <div class="bg-inset border border-div rounded p-2.5">
+                  <p class="text-ter text-[10px] mb-1">干预成本</p>
+                  <p class="font-bold text-pri font-mono" x-text="'¥' + (reportManager?.kpi_summary?.intervention_cost_estimate_yuan || 162)"></p>
+                </div>
+                <div class="bg-inset border border-div rounded p-2.5">
+                  <p class="text-ter text-[10px] mb-1">合规状态</p>
+                  <p class="font-bold text-moss" x-text="reportManager?.kpi_summary?.compliance_status || '达标'"></p>
+                </div>
+                <div class="bg-inset border border-div rounded p-2.5">
+                  <p class="text-ter text-[10px] mb-1">采茶日期</p>
+                  <p class="font-bold text-pri text-[11px] font-mono" x-text="reportManager?.kpi_summary?.next_harvest_date || '2026-06-01'"></p>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-div">
+                <p class="text-ter text-[10px] mb-2">行动事项</p>
+                <template x-for="item in (reportManager?.action_items || ['今天下午4点后施药', '14天后复检', '采茶前送检农残'])">
+                  <p class="text-sec leading-relaxed">· <span x-text="item"></span></p>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Government Card -->
+          <div class="bg-inset rounded-lg p-4 border border-div border-l-2 border-l-moss">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="scroll-text" class="w-5 h-5 text-moss"></i>
+                <div>
+                  <h3 class="font-display text-pri text-sm">政府版</h3>
+                  <p class="text-xs text-sec">监管台账 · 合规凭证</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono text-moss">GOV</span>
+            </div>
+            <div class="bg-card border border-div rounded-md p-3 text-xs min-h-[200px]" x-show="reportGovernment">
+              <p class="font-display text-pri mb-3 pb-2 border-b border-div font-mono"><span class="text-ter">台账编号</span> <span x-text="reportGovernment?.filing_id || 'TEA-2026-05-18-001'"></span></p>
+              <div class="space-y-1 text-sec">
+                <p><span class="text-ter inline-block w-16">施药日期</span><span class="text-pri font-mono" x-text="reportGovernment?.operation_record?.date"></span></p>
+                <p><span class="text-ter inline-block w-16">地块</span><span class="text-pri font-mono" x-text="reportGovernment?.operation_record?.plot_id"></span></p>
+                <p><span class="text-ter inline-block w-16">农药</span><span class="text-pri text-[11px]" x-text="reportGovernment?.operation_record?.pesticide_name"></span></p>
+                <p><span class="text-ter inline-block w-16">登记号</span><span class="text-pri font-mono" x-text="reportGovernment?.operation_record?.registration_no"></span></p>
+                <p><span class="text-ter inline-block w-16">剂量</span><span class="text-pri font-mono" x-text="reportGovernment?.operation_record?.dose"></span></p>
+                <p><span class="text-ter inline-block w-16">签字</span><span class="text-brew font-medium font-mono" x-text="reportGovernment?.operation_record?.operator_signature"></span></p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-div">
+                <p class="text-ter text-[10px] mb-2 font-mono">COMPLIANCE CERTIFICATE</p>
+                <template x-for="(value, key) in (reportGovernment?.compliance_certificate || {})">
+                  <p class="text-moss leading-relaxed flex items-start gap-1"><i data-lucide="check" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span><span x-text="key"></span> : <span x-text="value"></span></span></p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FARMER VIEW (ZHANG001)                                        -->
+  <!-- ============================================================ -->
+  <div x-show="view === 'farmer'" x-transition.opacity class="wechat-bg">
+    <header class="bg-card border-b border-div text-pri px-4 py-3 flex items-center gap-3">
+      <button @click="logout()" class="text-2xl leading-none text-sec hover:text-pri">←</button>
+      <div class="flex-1">
+        <h1 class="font-display text-pri">茗视智农助手</h1>
+        <p class="text-xs text-sec flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-moss"></span>
+          <span>在线 · 智能植保顾问</span>
+        </p>
+      </div>
+      <button class="text-xl text-sec hover:text-pri">···</button>
+    </header>
+
+    <div class="p-4 space-y-3 pb-24">
+      <div class="text-center text-xs text-ter my-2 font-mono">2026-05-18 09:45</div>
+
+      <div class="flex items-start gap-2 fade-in">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="wechat-bubble-system" x-text="reportFarmer"></div>
+      </div>
+
+      <div class="flex items-start gap-2 fade-in" style="animation-delay: 0.2s;">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="wechat-bubble-system">
+          <div class="flex items-center gap-3 text-sm">
+            <i data-lucide="volume-2" class="w-4 h-4 text-foundry"></i>
+            <div class="flex-1">
+              <div class="flex items-center gap-1.5">
+                <div class="h-1 bg-foundry/30 rounded-full flex-1"></div>
+                <div class="h-1 bg-foundry rounded-full" style="width: 20px;"></div>
+                <div class="h-1 bg-foundry/30 rounded-full flex-1"></div>
+              </div>
+              <p class="text-xs text-sec mt-1 font-mono">方言语音播报 · 0:18</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-2 fade-in" style="animation-delay: 0.4s;">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="bg-inset border border-div rounded-md p-4 max-w-[85%]">
+          <h3 class="font-display text-sm mb-3 text-foundry flex items-center gap-1.5">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+            <span>用药提醒卡片</span>
+          </h3>
+          <div class="text-xs space-y-2 text-pri">
+            <p class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">施药日期</span><span class="font-mono">今天（5月18日）</span></p>
+            <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">推荐时段</span><span class="font-mono">下午 4 点后</span></p>
+            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">地块</span><span>B-3 东南角约 <span class="font-mono">2 亩</span></span></p>
+            <p class="flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">用量</span><span class="font-mono">每亩 35 ml · 1:1500 稀释</span></p>
+            <p class="pt-2 border-t border-div flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-gold"></i><span class="text-gold font-medium">14 天后才能采茶（最早 6 月 1 日）</span></p>
+          </div>
+          <button class="w-full mt-3 py-2 bg-foundry hover:bg-foundry-hover text-cream rounded text-xs flex items-center justify-center gap-1.5">
+            <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+            <span>设置 PHI 倒计时提醒</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-2 fade-in" style="animation-delay: 0.6s;">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="wechat-bubble-system">
+          <p class="text-sm text-pri">遇到任何问题随时问我，比如「这种农药要不要兑酒」「下雨能不能打」</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixed bottom-0 inset-x-0 bg-card border-t border-div p-2 flex items-center gap-2">
+      <button class="text-sec hover:text-pri p-2"><i data-lucide="plus" class="w-5 h-5"></i></button>
+      <input type="text" placeholder="说点什么..." class="flex-1 bg-inset border border-div rounded-full px-4 py-2 text-sm outline-none text-pri focus:border-foundry transition-all">
+      <button class="text-foundry hover:text-foundry-hover p-2 border border-foundry/40 rounded-md flex items-center gap-1.5">
+        <i data-lucide="mic" class="w-4 h-4"></i>
+        <span class="text-xs font-mono">录音</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MANAGER VIEW (ADMIN888)                                       -->
+  <!-- ============================================================ -->
+  <div x-show="view === 'manager'" x-transition.opacity class="min-h-screen p-6 bg-base">
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="font-display text-pri text-xl">合作社管理仪表盘</h1>
+          <p class="text-sm text-sec">山地茶业合作社 · <span class="font-mono text-ter" x-text="userId || 'ADMIN888'"></span></p>
+        </div>
+      </div>
+      <button @click="logout()" class="text-sm text-sec hover:text-pri">退出</button>
+    </header>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-card p-4 rounded-lg border border-div">
+        <p class="text-xs text-sec flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5"></i>本月处置</p>
+        <p class="text-2xl font-bold text-pri mt-1 font-mono">12 <span class="text-sm text-ter">次</span></p>
+        <p class="text-xs text-moss mt-1 font-mono flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i>比上月 +3</p>
+      </div>
+      <div class="bg-card p-4 rounded-lg border border-div">
+        <p class="text-xs text-sec flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>合规率</p>
+        <p class="text-2xl font-bold text-moss mt-1 font-mono">100%</p>
+        <p class="text-xs text-sec mt-1">连续 3 月达标</p>
+      </div>
+      <div class="bg-card p-4 rounded-lg border border-div">
+        <p class="text-xs text-sec flex items-center gap-1.5"><i data-lucide="trending-down" class="w-3.5 h-3.5"></i>农药用量减少</p>
+        <p class="text-2xl font-bold text-moss mt-1 font-mono">-32%</p>
+        <p class="text-xs text-sec mt-1">vs 传统方案</p>
+      </div>
+      <div class="bg-card p-4 rounded-lg border border-div">
+        <p class="text-xs text-sec flex items-center gap-1.5"><i data-lucide="file-check" class="w-3.5 h-3.5"></i>出口合规凭证</p>
+        <p class="text-2xl font-bold text-pri mt-1 font-mono">8 <span class="text-sm text-ter">份</span></p>
+        <p class="text-xs text-gold mt-1 font-mono">5 份待审</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="col-span-2 bg-card rounded-lg border border-div p-6">
+        <h2 class="font-display text-pri mb-4 flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 text-foundry"></i>
+          <span>最新决策详情</span>
+        </h2>
+        <template x-if="reportManager">
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-inset border border-div rounded p-3">
+                <p class="text-xs text-sec mb-1">影响面积</p>
+                <p class="font-bold text-pri font-mono" x-text="(reportManager?.kpi_summary?.affected_area_mu || 0) + ' 亩'"></p>
+              </div>
+              <div class="bg-inset border border-div rounded p-3">
+                <p class="text-xs text-sec mb-1">干预成本</p>
+                <p class="font-bold text-pri font-mono" x-text="'¥' + (reportManager?.kpi_summary?.intervention_cost_estimate_yuan || 0)"></p>
+              </div>
+              <div class="bg-inset rounded p-3 border border-moss/40">
+                <p class="text-xs text-sec mb-1">合规状态</p>
+                <p class="font-bold text-moss" x-text="reportManager?.kpi_summary?.compliance_status || '加载中'"></p>
+              </div>
+              <div class="bg-inset rounded p-3 border border-gold/40">
+                <p class="text-xs text-sec mb-1">采茶日期</p>
+                <p class="font-bold text-pri font-mono" x-text="reportManager?.kpi_summary?.next_harvest_date || '加载中'"></p>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-div">
+              <p class="text-sm font-medium text-sec mb-2">推荐行动</p>
+              <template x-for="item in (reportManager?.action_items || [])">
+                <p class="text-sm text-pri py-1">· <span x-text="item"></span></p>
+              </template>
+            </div>
+          </div>
+        </template>
+        <template x-if="!reportManager">
+          <p class="text-sm text-ter italic">暂无决策记录。请先在演示模式（<span class="font-mono">DEMO000</span>）完成一次完整 Case B 演示。</p>
+        </template>
+      </div>
+
+      <div class="bg-card rounded-lg border border-div p-6">
+        <h2 class="font-display text-pri mb-4 flex items-center gap-2">
+          <i data-lucide="pen-tool" class="w-4 h-4 text-brew"></i>
+          <span>待签字事项</span>
+        </h2>
+        <div class="space-y-3">
+          <div class="p-3 bg-inset rounded-md border border-brick/40">
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-xs font-medium text-brick font-mono flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i>HIGH RISK</span>
+              <span class="text-xs text-ter font-mono">刚刚</span>
+            </div>
+            <p class="text-sm text-pri">B-3 地块欧盟出口订单</p>
+            <p class="text-xs text-sec mt-1 font-mono">MRL 裕度 &lt; 5%</p>
+          </div>
+          <div class="p-3 bg-inset rounded-md border border-gold/40">
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-xs font-medium text-gold font-mono flex items-center gap-1"><i data-lucide="info" class="w-3 h-3"></i>MEDIUM</span>
+              <span class="text-xs text-ter font-mono">2 小时前</span>
+            </div>
+            <p class="text-sm text-pri">A-7 地块有机基地</p>
+            <p class="text-xs text-sec mt-1">候选农药需复核</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 版本水印 (任务4) ============== -->
+  <div x-show="view !== 'login'"
+       class="fixed bottom-2 right-2 z-50 text-[10px] font-mono text-mark pointer-events-auto">
+    v1.0.0-beta · build 2026-05-15 · <span x-text="traceId"></span>
+  </div>
+
+</div>
+
+<script>
+function app() {
+  return {
+    // ============ State ============
+    view: 'login',
+    role: 'demo',
+    userId: '',
+    isPlaying: false,
+    isCompleted: false,
+    speed: 1,
+    trace: null,
+    currentAgent: null,
+    currentDetailHTML: '',
+    showHILModal: false,
+    hilSignature: '',
+    hilResolver: null,
+    showPersonas: false,
+    showComplianceProgress: false,
+
+    // ============ 工业感新增 state ============
+    traceId: 'a7c3f8e2',
+    sessionStart: null,
+    tokenCount: 0,
+    latencyP95Raw: 0,
+    _latencyTimer: null,
+    logExpanded: false,
+    logs: [],
+
+    // ============ 孪生地图 tab + 更新时间戳 ============
+    twinTab: 'realtime',
+    twinLastUpdate: '14:32:07',
+
+    // ============ 登录启动序列 ============
+    bootingUp: false,
+
+    complianceChecks: [
+      { label: '茶树禁用清单 (GB 2763-2026, 30 项)', status: '' },
+      { label: '安全间隔期 (PHI = 14 天)', status: '' },
+      { label: '国内 MRL 限值', status: '' },
+      { label: '欧盟 511 项 MRL · 出口高敏', status: '' },
+    ],
+
+    twinGrid: [],
+    anomalies: [],
+    conversationStream: [],  // 兼容旧 API（无人使用，但保留）
+    agentStates: {},
+
+    finalPrescription: null,
+    reportFarmer: null,
+    reportManager: null,
+    reportGovernment: null,
+
+    roles: [
+      { id: 'demo', name: '系统管理员（演示模式）', tag: 'DEMO', icon: 'monitor', desc: '完整观看Agent协同过程' },
+      { id: 'farmer', name: '茶农', tag: 'FARMER', icon: 'user', desc: '查看用药提醒和处方' },
+      { id: 'manager', name: '管理者', tag: 'MANAGER', icon: 'briefcase', desc: '合作社/茶企 KPI 仪表盘' },
+    ],
+
+    agentList: [
+      { id: 'patrol_agent',    name: '巡检 Agent', role: '无人机航线规划与安全校验',
+        icon: 'satellite',     tokens: '2.4k', tokensNum: 2400, latency: '2.5s', toolCalls: 3, summary: '', duration: '' },
+      { id: 'diagnosis_agent', name: '诊断 Agent', role: '病虫害识别与严重度判定',
+        icon: 'microscope',    tokens: '3.1k', tokensNum: 3100, latency: '3.0s', toolCalls: 4, summary: '', duration: '' },
+      { id: 'causal_agent',    name: '溯源 Agent', role: '病因分析与扩散预测',
+        icon: 'git-branch',    tokens: '4.2k', tokensNum: 4200, latency: '3.0s', toolCalls: 6, summary: '', duration: '' },
+      { id: 'treatment_agent', name: '决策 Agent', role: '合规校验与处方生成',
+        icon: 'shield-check',  tokens: '8.7k', tokensNum: 8700, latency: '6.2s', toolCalls: 9, summary: '', duration: '' },
+      { id: 'report_agent',    name: '报告 Agent', role: '三套Persona交付物生成',
+        icon: 'file-output',   tokens: '5.3k', tokensNum: 5300, latency: '2.5s', toolCalls: 3, summary: '', duration: '' },
+    ],
+
+    // ============ Computed ============
+    get roleLabel() {
+      return this.role === 'farmer' ? '茶农工号' : this.role === 'manager' ? '管理号' : '工号';
+    },
+    get rolePlaceholder() {
+      return this.role === 'farmer' ? '例如：ZHANG001' : this.role === 'manager' ? '例如：ADMIN888' : '例如：DEMO000';
+    },
+    get sessionId() {
+      const tag = (this.userId || 'DEMO').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'DEMO';
+      return `SES-2026-0515-${tag}`;
+    },
+    get agentsActive() {
+      return Object.values(this.agentStates).filter(s => s === 'active').length;
+    },
+    get tokenCountFmt() {
+      if (this.tokenCount === 0) return '0';
+      if (this.tokenCount < 1000) return String(this.tokenCount);
+      return (this.tokenCount / 1000).toFixed(1) + 'k';
+    },
+    get latencyP95Fmt() {
+      if (!this.sessionStart || this.latencyP95Raw === 0) return '-- ms';
+      return this.latencyP95Raw + ' ms';
+    },
+
+    // ============ Init ============
+    async init() {
+      this.initTwinGrid();
+      this.twinLastUpdate = this._fmtHMS(new Date());
+      this.refreshIcons();
+      try {
+        const res = await fetch('output/trace_caseB.json');
+        if (res.ok) {
+          this.trace = await res.json();
+          console.log('Trace loaded:', this.trace);
+        }
+      } catch (e) {
+        console.warn('Trace not pre-loaded:', e);
+      }
+    },
+
+    _fmtHMS(d) {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    },
+
+    refreshIcons() {
+      // Lucide 替换 <i data-lucide> 为 <svg>。每次 Alpine reactive 渲染后需要再调用。
+      this.$nextTick(() => {
+        if (window.lucide) window.lucide.createIcons();
+      });
+    },
+
+    initTwinGrid() {
+      this.twinGrid = [];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 6; c++) {
+          this.twinGrid.push({
+            id: `cell-${r}-${c}`,
+            row: r,
+            col: c,
+            label: `${String.fromCharCode(65 + r)}${c + 1}`,
+            state: 'normal',
+          });
+        }
+      }
+    },
+
+    // ============ Routing ============
+    login() {
+      if (!this.userId) { alert('请输入工号/管理号'); return; }
+      const id = this.userId.toUpperCase();
+
+      // 计算目标 view (但先不切换)
+      let targetView;
+      if (id.startsWith('ZHANG') || this.role === 'farmer') {
+        targetView = 'farmer';
+      } else if (id.startsWith('ADMIN') || this.role === 'manager') {
+        targetView = 'manager';
+      } else {
+        targetView = 'demo';
+      }
+
+      // 启动序列：1.8s 后再真正切换 view
+      this.bootingUp = true;
+      this.refreshIcons();
+      setTimeout(() => {
+        if (targetView === 'farmer' || targetView === 'manager') {
+          this.useDefaultReports();
+        }
+        this.view = targetView;
+        this.bootingUp = false;
+        this.refreshIcons();
+      }, 1800);
+    },
+
+    logout() {
+      this.view = 'login';
+      this.userId = '';
+      this.reset();
+      this.refreshIcons();
+    },
+
+    // ============ Terminal Log Drawer ============
+    toggleLog() {
+      this.logExpanded = !this.logExpanded;
+      this.refreshIcons();
+      if (this.logExpanded) {
+        setTimeout(() => {
+          const flow = document.getElementById('logFlow');
+          if (flow) flow.scrollTop = flow.scrollHeight;
+        }, 100);
+      }
+    },
+
+    log(level, agentId, text) {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const pad3 = (n) => String(n).padStart(3, '0');
+      const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad3(now.getMilliseconds())}`;
+      const agent = (agentId || 'system').replace('_agent', '');
+      this.logs.push({
+        id: Date.now() + Math.random(),
+        time, level, agent, text
+      });
+      if (this.logs.length > 200) this.logs.shift();
+      setTimeout(() => {
+        if (!this.logExpanded) return;
+        const flow = document.getElementById('logFlow');
+        if (flow) flow.scrollTop = flow.scrollHeight;
+      }, 50);
+    },
+
+    // 兼容旧调用
+    streamConv(agentId, text) {
+      this.log('INFO', agentId, text);
+    },
+
+    levelColor(level) {
+      switch (level) {
+        case 'WARN':  return 'text-gold';
+        case 'ERROR': return 'text-brick';
+        case 'DEBUG': return 'text-mute';
+        case 'INFO':
+        default:      return 'text-sec';
+      }
+    },
+
+    // ============ Demo Flow ============
+    async startDemo() {
+      if (this.isPlaying) return;
+      this.isPlaying = true;
+      this.isCompleted = false;
+
+      // Lazy load trace
+      if (!this.trace) {
+        try {
+          const res = await fetch('output/trace_caseB.json');
+          if (res.ok) this.trace = await res.json();
+        } catch (e) {
+          console.warn('Continuing with fallback values:', e);
+        }
+      }
+
+      // Reset state
+      this.agentList.forEach(a => { a.summary = ''; a.duration = ''; });
+      this.agentStates = {};
+      this.logs = [];
+      this.currentAgent = null;
+      this.currentDetailHTML = '';
+      this.showComplianceProgress = false;
+      this.complianceChecks.forEach(c => c.status = '');
+      this.initTwinGrid();
+      this.anomalies = [];
+
+      // Session/meta bar 启动
+      this.sessionStart = Date.now();
+      this.tokenCount = 0;
+      this.latencyP95Raw = 0;
+      this.twinLastUpdate = this._fmtHMS(new Date());
+      if (this._latencyTimer) clearInterval(this._latencyTimer);
+      this._latencyTimer = setInterval(() => {
+        // 实时 p95 latency 模拟 (200-800ms 区间)
+        this.latencyP95Raw = 200 + Math.floor(Math.random() * 600);
+        // 让"最后更新"也跟着走，模拟实时孪生
+        this.twinLastUpdate = this._fmtHMS(new Date());
+      }, 1200);
+
+      this.log('INFO', 'supervisor', `session start, trace_id=${this.traceId}, loading trace_caseB.json`);
+      this.log('DEBUG', 'supervisor', 'graph compiled: 5 nodes, conditional routing enabled');
+
+      await this.delay(600);
+
+      // 异常格标记
+      const anomalyCell = this.twinGrid.find(c => c.row === 2 && c.col === 4);
+      if (anomalyCell) anomalyCell.state = 'anomaly';
+      const warnCell = this.twinGrid.find(c => c.row === 2 && c.col === 3);
+      if (warnCell) warnCell.state = 'warning';
+      this.anomalies = ['B-3 东南侧约 2.1 亩'];
+
+      // -------- Patrol --------
+      this.log('INFO', 'supervisor', 'routing to patrol_agent');
+      await this.runAgent('patrol_agent', `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-[#87A96B] pulse-soft">●</span>
+              <span>DJI Mavic 3M 巡检任务执行中</span>
+            </div>
+          </div>
+          <div class="bg-[#0A0D0A] border border-white/10 rounded-lg p-3 font-mono text-[11px] text-white/70 space-y-1.5">
+            <div class="flex justify-between"><span class="text-white/40">起飞时间</span><span>09:15:23</span></div>
+            <div class="flex justify-between"><span class="text-white/40">覆盖面积</span><span>8.6 亩</span></div>
+            <div class="flex justify-between"><span class="text-white/40">航点数</span><span>14</span></div>
+            <div class="flex justify-between"><span class="text-white/40">仿地飞行</span><span class="text-[#87A96B]">已启用</span></div>
+            <div class="flex justify-between"><span class="text-white/40">采集模式</span><span>RGB + 多光谱</span></div>
+            <div class="pt-2 mt-1 border-t border-white/10">
+              <div class="flex justify-between mb-1"><span class="text-white/40">巡检进度</span><span class="text-[#87A96B]">采集中...</span></div>
+              <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-[#87A96B] rounded-full" style="width:60%; transition: width 2s ease;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `, 2500, [
+        ['DEBUG', 'tool_call: get_plot_info(plot_id="B-3")'],
+        ['DEBUG', 'tool_call: get_weather_forecast(hours=24)'],
+        ['DEBUG', 'tool_call: compute_boustrophedon_path(grid=4x6)'],
+      ]);
+      this.agentList[0].summary = '已生成仿地航线 · 14 个航点 · 安全包络通过';
+      this.completeAgent(0);
+
+      // -------- Diagnosis --------
+      this.log('INFO', 'supervisor', 'routing to diagnosis_agent');
+      await this.runAgent('diagnosis_agent', `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85 flex items-center gap-2">
+            <span class="text-[#87A96B] pulse-soft">●</span>
+            <span>K230 边缘端推理 + 多光谱标注</span>
+          </div>
+
+          <!-- 病害检测标注图 -->
+          <div class="rounded-lg overflow-hidden border border-white/10">
+            <img src="assets/perception-fusion.png" alt="病害检测标注"
+                 class="w-full h-auto block" />
+            <div class="bg-[#0A0D0A] px-3 py-2 text-[11px] flex items-center justify-between">
+              <span class="text-white/60">边缘端检测标注 · CLAHE 阴影自适应</span>
+              <span class="text-[#C8741E] font-medium">2 处病斑</span>
+            </div>
+          </div>
+
+          <!-- K230 回传 JSON 文本卡片(体现轻量化) -->
+          <div class="bg-[#0A0D0A] border border-white/10 rounded-lg p-3 font-mono text-[11px]">
+            <div class="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
+              <span class="text-[#87A96B]">● K230-EDGE-01</span>
+              <span class="text-white/40">JSON · 412 bytes</span>
+            </div>
+            <pre class="text-white/75 leading-relaxed whitespace-pre-wrap">{
+  "device": "K230-EDGE-01",
+  "model": "MS-RepViT-Tea/INT8",
+  "latency_ms": 18.2,
+  "disease": "茶炭疽病",
+  "confidence": 0.93,
+  "severity": 3,
+  "ndvi_mean": 0.42,
+  "bbox_count": 3,
+  "area_mu": 2.1
+}</pre>
+            <div class="mt-2 pt-2 border-t border-white/10 text-white/40 text-[10px] leading-relaxed">
+              仅上行 412 字节 · 边缘端完成推理<br>原始图像不出本地 · 隐私 + 带宽双优
+            </div>
+          </div>
+        </div>
+      `, 3000, [
+        ['DEBUG', 'tool_call: load_perception_raw(blocks=5)'],
+        ['DEBUG', 'tool_call: compute_ndvi_stats()'],
+        ['DEBUG', 'llm_call: deepseek-v4-flash, prompt_tokens=1240'],
+        ['INFO',  'severity=3, confidence=0.91, needs_vlm_review=false'],
+      ]);
+      this.agentList[1].summary = '茶炭疽病 · 3级中等偏重 · 2.1亩 · 置信度0.91';
+      this.completeAgent(1);
+
+      // 诊断完成短暂展示：切到 NDVI 验证视图停留 2.3s
+      this.currentDetailHTML = `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85 flex items-center gap-2">
+            <span class="text-[#87A96B]">✓</span>
+            <span>诊断完成 · NDVI 光谱交叉验证</span>
+          </div>
+          <div class="rounded-lg overflow-hidden border border-white/10">
+            <img src="assets/perception-ndvi.png" alt="NDVI热力验证"
+                 class="w-full h-auto block" />
+            <div class="bg-[#0A0D0A] px-3 py-2 text-[11px] flex items-center justify-between">
+              <span class="text-white/60">NDVI 反演热力图</span>
+              <span class="text-[#C8741E] font-medium">异常区 NDVI 0.42</span>
+            </div>
+          </div>
+          <div class="bg-[#0A0D0A] border border-white/10 rounded-lg p-3 text-[11px] text-white/70 space-y-1">
+            <div class="flex justify-between"><span class="text-white/40">病害类型</span><span class="text-white/90">茶炭疽病</span></div>
+            <div class="flex justify-between"><span class="text-white/40">严重度</span><span class="text-[#C8741E]">3 级 · 中等偏重</span></div>
+            <div class="flex justify-between"><span class="text-white/40">RGB+NDVI 双流</span><span class="text-[#87A96B]">一致 ✓</span></div>
+          </div>
+        </div>
+      `;
+      this.log('INFO', 'diagnosis_agent', 'NDVI cross-validation: passed (consistency=0.94)');
+      await this.delay(2300 / this.speed);
+
+      // -------- Causal --------
+      this.log('INFO', 'supervisor', 'routing to causal_agent');
+      await this.runAgent('causal_agent', `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85 flex items-center gap-2">
+            <span class="text-[#87A96B] pulse-soft">●</span>
+            <span>Chain-of-Causality 因果推理</span>
+          </div>
+          <div class="bg-[#0A0D0A] border border-white/10 rounded-lg p-3 text-[11px] text-white/70 space-y-2">
+            <div class="text-white/40">推理链:</div>
+            <div class="pl-2 border-l-2 border-[#87A96B]/40 space-y-1.5">
+              <div>① CONFIRM · 确认茶炭疽病</div>
+              <div>② RETRIEVE · 知识图谱 + 时空RAG</div>
+              <div>③ EXPLAIN · 连续阴雨7天 + 金牡丹易感</div>
+              <div>④ FORECAST · 未来7天扩散概率 <span class="text-[#C8741E]">68%</span></div>
+            </div>
+          </div>
+        </div>
+      `, 3000, [
+        ['DEBUG', 'tool_call: query_knowledge(disease="茶炭疽病")'],
+        ['DEBUG', 'tool_call: get_weather_forecast(hours=168)'],
+        ['DEBUG', 'tool_call: kg_query(node="Colletotrichum", depth=2)'],
+        ['DEBUG', 'tool_call: spatial_rag_search(top_k=5)'],
+        ['DEBUG', 'llm_call: deepseek-v4-flash, prompt_tokens=2180'],
+        ['INFO',  'spread_prob_7d=0.68, urgency=high'],
+      ]);
+      this.agentList[2].summary = '主因：连续阴雨+品种易感 · 7天扩散概率68%';
+      this.completeAgent(2);
+
+      // -------- Treatment --------
+      this.log('INFO', 'supervisor', 'routing to treatment_agent');
+      await this.runAgentBegin('treatment_agent', `
+        <div class="text-sm text-pri space-y-2">
+          <p><strong class="text-foundry">Phase 1</strong> · 候选生成</p>
+          <p class="text-xs text-sec">从农药库筛选出 4 个候选方案 · 准备送入合规求解器</p>
+        </div>
+      `);
+      this.log('DEBUG', 'treatment_agent', 'tool_call: query_candidates(disease="茶炭疽病")');
+      this.log('DEBUG', 'treatment_agent', 'llm_call: deepseek-v4-flash, phase=candidate_generation');
+      this.log('INFO',  'treatment_agent', 'candidates=4 [P001, P002, P003, P004]');
+      await this.delay(1500);
+
+      // Compliance progress
+      this.showComplianceProgress = true;
+      this.refreshIcons();
+      this.log('INFO', 'treatment_agent', 'phase=compliance_solving, invoking deterministic solver');
+      for (let i = 0; i < this.complianceChecks.length; i++) {
+        this.complianceChecks[i].status = 'checking';
+        this.log('DEBUG', 'compliance', `check: ${this.complianceChecks[i].label}`);
+        this.refreshIcons();
+        await this.delay(900 / this.speed);
+        this.complianceChecks[i].status = 'checked';
+        this.refreshIcons();
+      }
+      await this.delay(600);
+
+      // HIL
+      this.log('WARN', 'treatment_agent', 'EU MRL margin < 0.05 mg/kg → risk=high, requires_human_approval=true');
+      this.log('INFO', 'treatment_agent', 'HIL pause: waiting for signature');
+      this.showHILModal = true;
+      this.refreshIcons();
+      await new Promise(resolve => { this.hilResolver = resolve; });
+      this.showHILModal = false;
+
+      if (this.hilSignature === '__rejected__') {
+        this.log('ERROR', 'treatment_agent', 'HIL rejected by operator, session aborted');
+        this.isPlaying = false;
+        if (this._latencyTimer) { clearInterval(this._latencyTimer); this._latencyTimer = null; }
+        return;
+      }
+
+      this.log('INFO', 'treatment_agent', `HIL approved, signature=${this.hilSignature}`);
+      this.log('DEBUG', 'treatment_agent', 'llm_call: deepseek-v4-flash, phase=final_selection');
+      await this.delay(1200);
+
+      this.agentList[3].summary = '最终处方：苯醚甲环唑·吡唑醚菌酯 30%SC · 1:1500 · 35ml/亩 · PHI 14天';
+      this.agentStates['treatment_agent'] = 'done';
+      this.agentList[3].duration = '6.2s';
+      this.tokenCount += this.agentList[3].tokensNum;
+      this.log('INFO', 'treatment_agent', `task complete, duration=6.2s, tokens=${this.agentList[3].tokensNum}, tools=${this.agentList[3].toolCalls}`);
+      this.currentAgent = null;
+      this.refreshIcons();
+
+      // -------- Report --------
+      this.log('INFO', 'supervisor', 'routing to report_agent');
+      await this.runAgent('report_agent', `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85 flex items-center gap-2">
+            <span class="text-[#87A96B] pulse-soft">●</span>
+            <span>Schema-Filling + Polish 双阶段</span>
+          </div>
+          <div class="space-y-2 text-[11px]">
+            <div class="bg-[#0A0D0A] border border-white/10 rounded p-2.5 text-white/70">✓ 茶农版 · 口语化 + 方言语音</div>
+            <div class="bg-[#0A0D0A] border border-white/10 rounded p-2.5 text-white/70">✓ 管理者版 · KPI 仪表盘</div>
+            <div class="bg-[#0A0D0A] border border-white/10 rounded p-2.5 text-white/70">✓ 政府版 · 监管台账 + 合规凭证</div>
+          </div>
+        </div>
+      `, 2500, [
+        ['DEBUG', 'llm_call: deepseek-v4-flash, persona=farmer, dialect=ok'],
+        ['DEBUG', 'llm_call: deepseek-v4-flash, persona=manager'],
+        ['DEBUG', 'llm_call: deepseek-v4-flash, persona=government'],
+      ]);
+      this.agentList[4].summary = '已生成 3 套Persona交付物';
+      this.completeAgent(4);
+
+      this.log('INFO', 'supervisor', `session complete · total_tokens=${this.tokenCount} · all 5 agents finished`);
+
+      this.extractFinalOutputs();
+      this.isPlaying = false;
+      this.isCompleted = true;
+      this.currentAgent = null;
+      this.showComplianceProgress = false;
+      if (this._latencyTimer) { clearInterval(this._latencyTimer); this._latencyTimer = null; }
+      this.refreshIcons();
+    },
+
+    completeAgent(idx) {
+      const a = this.agentList[idx];
+      this.agentStates[a.id] = 'done';
+      a.duration = a.latency;
+      this.tokenCount += a.tokensNum;
+      this.log('INFO', a.id, `task complete, duration=${a.latency}, tokens=${a.tokensNum}, tools=${a.toolCalls}`);
+      this.refreshIcons();
+    },
+
+    async runAgent(agentId, detailHTML, durationMs, extraLogs = []) {
+      await this.runAgentBegin(agentId, detailHTML);
+      // 中间穿插 DEBUG 日志
+      const ticksPerLog = Math.max(1, Math.floor(extraLogs.length));
+      for (let i = 0; i < extraLogs.length; i++) {
+        const [lvl, msg] = extraLogs[i];
+        this.log(lvl, agentId, msg);
+        await this.delay((durationMs / this.speed) / (extraLogs.length + 1));
+      }
+      const remaining = (durationMs / this.speed) - ((durationMs / this.speed) / (extraLogs.length + 1)) * extraLogs.length;
+      await this.delay(Math.max(0, remaining));
+    },
+
+    async runAgentBegin(agentId, detailHTML) {
+      const agent = this.agentList.find(a => a.id === agentId);
+      this.currentAgent = agent;
+      this.agentStates[agentId] = 'active';
+      this.currentDetailHTML = detailHTML;
+      this.log('INFO', agentId, `start: ${agent.role}`);
+      this.refreshIcons();
+    },
+
+    hilApprove() {
+      if (!this.hilSignature) return;
+      if (this.hilResolver) this.hilResolver();
+    },
+
+    hilReject() {
+      this.hilSignature = '__rejected__';
+      if (this.hilResolver) this.hilResolver();
+    },
+
+    extractFinalOutputs() {
+      this.useDefaultReports();
+      if (!this.trace) return;
+      const events = this.trace.events || [];
+      for (const e of events.slice().reverse()) {
+        if (e.type === 'agent_end' && e.output) {
+          if (e.output.final_prescription) this.finalPrescription = e.output.final_prescription;
+          if (e.output.report_farmer) this.reportFarmer = e.output.report_farmer;
+          if (e.output.report_manager) this.reportManager = e.output.report_manager;
+          if (e.output.report_government) this.reportGovernment = e.output.report_government;
+        }
+      }
+    },
+
+    useDefaultReports() {
+      if (!this.finalPrescription) {
+        this.finalPrescription = {
+          pesticide_name: '苯醚甲环唑·吡唑醚菌酯 30%悬浮剂',
+          registration_no: 'PD20191234',
+          dilution_ratio: '1:1500',
+          dose_ml_per_mu: 35,
+          phi_days: 14,
+          earliest_harvest_date: '2026-06-01'
+        };
+      }
+      if (!this.reportFarmer) {
+        this.reportFarmer = '老张师傅好。B-3 地块的茶叶得了茶炭疽病，今天下午 4 点以后请用「苯醚甲环唑+吡唑醚菌酯」打一下，按 1:1500 兑水，每亩约 35 毫升。打完以后等 14 天才能采茶，最早 6 月 1 号能采。需要语音提醒可以点下方"录音"按钮。';
+      }
+      if (!this.reportManager) {
+        this.reportManager = {
+          kpi_summary: {
+            affected_area_mu: 2.1,
+            intervention_cost_estimate_yuan: 162,
+            expected_yield_protection_pct: 92,
+            compliance_status: '达标',
+            next_harvest_date: '2026-06-01'
+          },
+          action_items: ['今天下午 4 点后施药', '7 天后回头复检', '采茶前送检农残（出口订单必须）']
+        };
+      }
+      if (!this.reportGovernment) {
+        this.reportGovernment = {
+          filing_id: 'TEA-2026-05-18-001',
+          operation_record: {
+            date: '2026-05-18',
+            plot_id: 'B-3',
+            pesticide_name: '苯醚甲环唑·吡唑醚菌酯 30%SC',
+            registration_no: 'PD20191234',
+            dose: '35 ml/亩',
+            operator_signature: this.hilSignature || 'ZHANG001'
+          },
+          compliance_certificate: {
+            'GB 2763-2026 国内MRL': '通过',
+            '欧盟 EU 511 MRL': '通过',
+            'PHI 安全间隔': '通过',
+            '茶树禁用清单': '通过'
+          }
+        };
+      }
+    },
+
+    delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    cellClass(cell) {
+      if (cell.state === 'anomaly') return 'twin-cell twin-cell-anomaly';
+      if (cell.state === 'warning') return 'twin-cell twin-cell-warning';
+      return 'twin-cell twin-cell-normal';
+    },
+
+    agentStatus(agentId) { return this.agentStates[agentId] || 'pending'; },
+
+    agentCardClass(agentId) {
+      const s = this.agentStatus(agentId);
+      if (s === 'active') return 'bg-foundry/10 border-foundry/40';
+      if (s === 'done')   return 'bg-inset border-div';
+      return 'bg-card border-div opacity-50';
+    },
+
+    agentIconBg(agentId) {
+      const s = this.agentStatus(agentId);
+      if (s === 'active') return 'bg-foundry pulse-soft';
+      if (s === 'done')   return 'bg-moss';
+      return 'bg-inset border border-div';
+    },
+
+    reset() {
+      this.isPlaying = false;
+      this.isCompleted = false;
+      this.currentAgent = null;
+      this.currentDetailHTML = '';
+      this.showHILModal = false;
+      this.showPersonas = false;
+      this.showComplianceProgress = false;
+      this.hilSignature = '';
+      this.agentList.forEach(a => { a.summary = ''; a.duration = ''; });
+      this.agentStates = {};
+      this.logs = [];
+      this.complianceChecks.forEach(c => c.status = '');
+      this.initTwinGrid();
+      this.anomalies = [];
+      this.finalPrescription = null;
+      this.reportFarmer = null;
+      this.reportManager = null;
+      this.reportGovernment = null;
+      this.sessionStart = null;
+      this.tokenCount = 0;
+      this.latencyP95Raw = 0;
+      if (this._latencyTimer) { clearInterval(this._latencyTimer); this._latencyTimer = null; }
+      this.refreshIcons();
+    },
+  };
+}
+</script>
+
+<script>
+  // Lucide 初始化 + Alpine 渲染完成后再渲染图标
+  setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
+  document.addEventListener('alpine:initialized', () => {
+    setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 200);
+  });
+  // 兜底：每秒重渲染一次（lucide.createIcons 幂等，不影响已渲染的 svg）
+  setInterval(() => { if (window.lucide) lucide.createIcons(); }, 1000);
+</script>
+
+</body>
+</html>
