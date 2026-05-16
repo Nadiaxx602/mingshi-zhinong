@@ -1164,14 +1164,78 @@
           <p class="text-sm text-pri">遇到任何问题随时问我，比如「这种农药要不要兑酒」「下雨能不能打」</p>
         </div>
       </div>
+
+      <!-- ============ 动态聊天气泡：用户提问 + AI 真实回复 ============ -->
+      <template x-for="(msg, idx) in chatMessages" :key="idx">
+        <div>
+          <!-- 用户气泡 (右侧, foundry 绿) -->
+          <div x-show="msg.role === 'user'" class="flex items-start gap-2 justify-end fade-in">
+            <div class="bg-foundry text-cream rounded-lg px-3 py-2 max-w-[80%] text-sm">
+              <p x-text="msg.content"></p>
+            </div>
+            <div class="brand-mark w-10 h-10 bg-inset border border-div rounded-md text-sec flex-shrink-0">
+              <i data-lucide="user" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <!-- AI 气泡 (左侧, 灰底) -->
+          <div x-show="msg.role === 'assistant'" class="flex items-start gap-2 fade-in">
+            <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+              <i data-lucide="leaf" class="w-5 h-5"></i>
+            </div>
+            <div class="wechat-bubble-system">
+              <p class="text-sm text-pri whitespace-pre-wrap" x-text="msg.content"></p>
+              <p x-show="msg.tokens" class="text-[10px] text-ter font-mono mt-1.5 pt-1.5 border-t border-div">
+                <span x-text="msg.tokens"></span> tokens · deepseek-v4-flash
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- AI 思考中（loading 气泡） -->
+      <div x-show="chatLoading" class="flex items-start gap-2 fade-in">
+        <div class="brand-mark w-10 h-10 bg-foundry rounded-md text-cream flex-shrink-0">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="wechat-bubble-system">
+          <p class="text-sm text-sec flex items-center gap-2">
+            <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-foundry"></i>
+            <span>AI 正在思考...</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- 聊天错误提示 -->
+      <div x-show="chatError" class="flex items-start gap-2 fade-in">
+        <div class="brand-mark w-10 h-10 bg-brick rounded-md text-cream flex-shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div class="bg-brick/15 border border-brick/40 rounded-lg p-3 max-w-[85%]">
+          <p class="text-sm text-pri" x-text="chatError"></p>
+          <p class="text-[10px] text-ter font-mono mt-1">如果一直失败，可能是 Worker 未部署 / API key 没配 / 国内代理网络问题</p>
+        </div>
+      </div>
+
+      <!-- 占位锚点（自动滚动用） -->
+      <div id="farmerChatBottom"></div>
     </div>
 
     <div class="fixed bottom-0 inset-x-0 bg-card border-t border-div p-2 flex items-center gap-2">
-      <button class="text-sec hover:text-pri p-2"><i data-lucide="plus" class="w-5 h-5"></i></button>
-      <input type="text" placeholder="说点什么..." class="flex-1 bg-inset border border-div rounded-full px-4 py-2 text-sm outline-none text-pri focus:border-foundry transition-all">
-      <button class="text-foundry hover:text-foundry-hover p-2 border border-foundry/40 rounded-md flex items-center gap-1.5">
-        <i data-lucide="mic" class="w-4 h-4"></i>
-        <span class="text-xs font-mono">录音</span>
+      <button class="text-sec hover:text-pri p-2" title="附件（演示装饰）"><i data-lucide="plus" class="w-5 h-5"></i></button>
+      <input
+        type="text"
+        x-model="chatInput"
+        @keyup.enter="sendChatMessage()"
+        :disabled="chatLoading"
+        placeholder="问问 AI 顾问，例如：茶炭疽病该用什么药？"
+        class="flex-1 bg-inset border border-div rounded-full px-4 py-2 text-sm outline-none text-pri focus:border-foundry transition-all disabled:opacity-50">
+      <button
+        @click="sendChatMessage()"
+        :disabled="chatLoading || !chatInput.trim()"
+        :class="(!chatInput.trim() || chatLoading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-foundry hover:text-cream'"
+        class="text-foundry p-2 border border-foundry/40 rounded-md flex items-center gap-1.5 transition-colors">
+        <i :data-lucide="chatLoading ? 'loader-2' : 'send'" :class="chatLoading ? 'w-4 h-4 animate-spin' : 'w-4 h-4'"></i>
+        <span class="text-xs font-mono" x-text="chatLoading ? '...' : '发送'"></span>
       </button>
     </div>
   </div>
@@ -1325,6 +1389,14 @@ function app() {
     // ============ 登录启动序列 ============
     bootingUp: false,
 
+    // ============ 茶农 AI 聊天 (DeepSeek V4 真实调用) ============
+    // Cloudflare Worker 代理 → DeepSeek V4 Flash API
+    WORKER_URL: 'https://mingshi-chat.jieleng685.workers.dev',
+    chatMessages: [],      // [{role: 'user'|'assistant', content, tokens?}]
+    chatInput: '',
+    chatLoading: false,
+    chatError: '',
+
     complianceChecks: [
       { label: '茶树禁用清单 (GB 2763-2026, 30 项)', status: '' },
       { label: '安全间隔期 (PHI = 14 天)', status: '' },
@@ -1461,6 +1533,56 @@ function app() {
       this.userId = '';
       this.reset();
       this.refreshIcons();
+    },
+
+    // ============ AI 聊天发送 (真实调用 DeepSeek V4) ============
+    async sendChatMessage() {
+      const text = this.chatInput.trim();
+      if (!text || this.chatLoading) return;
+
+      this.chatError = '';
+      this.chatMessages.push({ role: 'user', content: text });
+      this.chatInput = '';
+      this.chatLoading = true;
+      this.refreshIcons();
+      this._scrollChatToBottom();
+
+      try {
+        const res = await fetch(this.WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: this.chatMessages.map(m => ({ role: m.role, content: m.content })),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          this.chatError = data.error || `HTTP ${res.status}`;
+          this.chatMessages.pop();   // 回滚用户消息（失败时让用户看到输入框还在）
+          this.chatInput = text;
+        } else {
+          this.chatMessages.push({
+            role: 'assistant',
+            content: data.reply || '(空回复)',
+            tokens: data.tokens?.total || 0,
+          });
+        }
+      } catch (e) {
+        this.chatError = `网络错误：${e.message}（Worker URL 是否正确？是否需要梯子？）`;
+        this.chatMessages.pop();
+        this.chatInput = text;
+      } finally {
+        this.chatLoading = false;
+        this.refreshIcons();
+        this._scrollChatToBottom();
+      }
+    },
+
+    _scrollChatToBottom() {
+      setTimeout(() => {
+        const el = document.getElementById('farmerChatBottom');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 80);
     },
 
     // ============ Terminal Log Drawer ============
