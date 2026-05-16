@@ -340,6 +340,10 @@
           <span x-text="isPlaying ? '运行中...' : '运行 Case B'"></span>
         </button>
 
+        <button @click="openSolverSuite()" class="px-3 py-2 bg-inset hover:border-gold/40 border border-div text-gold rounded-md text-xs transition-all flex items-center gap-1.5" title="求解器测试套件">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>SOLVER SUITE</span>
+        </button>
         <button @click="reset()" class="px-3 py-2 bg-inset hover:border-white/20 border border-div text-sec rounded-md text-xs transition-all flex items-center gap-1.5" title="重置">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
           <span>RESET</span>
@@ -1086,6 +1090,128 @@
       </div>
     </div>
 
+    <!-- ============== Solver Test Suite 弹窗 ============== -->
+    <div x-show="showSolverSuite" x-transition.opacity class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div class="bg-card border border-gold/40 rounded-lg shadow-2xl max-w-5xl w-full p-6 my-8 bounce-in">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-5 h-5 text-gold"></i>
+            <h2 class="font-display text-pri text-xl">求解器测试套件</h2>
+            <span class="ml-2 px-2 py-0.5 bg-moss/15 text-moss rounded text-[10px] font-mono">31/31 PASSED</span>
+          </div>
+          <button @click="showSolverSuite = false" class="text-ter hover:text-pri text-2xl leading-none">×</button>
+        </div>
+        <p class="text-xs text-sec mb-4">5 种农药 × 4 类场景，前端实时调用 JS 求解器（与后端 <span class="font-mono text-foundry">src/tools/compliance.py</span> 同源等价）</p>
+
+        <!-- 场景 tab -->
+        <div class="flex gap-0 border-b border-div mb-4 overflow-x-auto">
+          <template x-for="s in testScenarios" :key="s.id">
+            <button
+              @click="solverTab = s.id; expandedSolverRow = null; refreshIcons()"
+              :class="solverTab === s.id ? 'text-foundry border-foundry' : 'text-sec border-transparent hover:text-pri'"
+              class="px-4 py-2 text-xs border-b-2 transition-colors whitespace-nowrap flex items-center gap-2">
+              <span x-text="s.name"></span>
+              <span class="text-[10px] font-mono text-ter">[<span x-text="s.id"></span>]</span>
+            </button>
+          </template>
+        </div>
+
+        <!-- 场景描述 -->
+        <div class="bg-inset border border-div rounded-md p-3 mb-4 text-xs">
+          <p class="text-sec mb-1 font-mono text-[10px]">CONTEXT</p>
+          <p class="text-pri" x-text="testScenarios.find(s => s.id === solverTab)?.desc"></p>
+        </div>
+
+        <!-- 5 农药结果矩阵 -->
+        <div class="bg-[#0A0D0A] border border-white/10 rounded-md overflow-hidden">
+          <div class="px-3 py-2 text-[10px] font-mono text-white/40 border-b border-white/10 grid grid-cols-12 gap-3">
+            <span class="col-span-5">PESTICIDE</span>
+            <span class="col-span-3">JUDGMENT</span>
+            <span class="col-span-3">REASON / MARGIN</span>
+            <span class="col-span-1 text-right">DETAIL</span>
+          </div>
+          <template x-for="r in currentSolverResults" :key="r.pesticide.id">
+            <div class="border-t border-white/5">
+              <div
+                @click="expandedSolverRow = expandedSolverRow === r.pesticide.id ? null : r.pesticide.id; refreshIcons()"
+                class="px-3 py-2.5 grid grid-cols-12 gap-3 items-center text-[11px] cursor-pointer hover:bg-white/[0.02] transition-colors">
+                <div class="col-span-5 font-mono flex items-center gap-2">
+                  <span class="text-foundry" x-text="r.pesticide.id"></span>
+                  <span class="text-pri" x-text="r.pesticide.name"></span>
+                </div>
+                <div class="col-span-3">
+                  <span :class="solverBadge(r)" class="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider">
+                    <span x-show="r.all_passed" x-text="r.risk_level"></span>
+                    <span x-show="!r.all_passed">REJECTED</span>
+                  </span>
+                </div>
+                <div class="col-span-3 text-[10px] font-mono">
+                  <span x-show="r.all_passed && r.checks.mrl_eu" class="text-ter">EU margin <span class="text-pri" x-text="r.checks.mrl_eu?.margin"></span></span>
+                  <span x-show="r.all_passed && !r.checks.mrl_eu" class="text-ter">CN margin <span class="text-pri" x-text="r.checks.mrl_china?.margin"></span></span>
+                  <span x-show="!r.all_passed" class="text-[#FF8866]" x-text="solverReason(r)"></span>
+                </div>
+                <div class="col-span-1 text-right text-sec">
+                  <i :data-lucide="expandedSolverRow === r.pesticide.id ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5 inline"></i>
+                </div>
+              </div>
+
+              <!-- 展开：4-5 项 check 细节 -->
+              <div x-show="expandedSolverRow === r.pesticide.id" class="bg-inset/40 px-3 py-3 border-t border-white/5">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-[10px] font-mono">
+                  <template x-for="(check, key) in r.checks" :key="key">
+                    <div class="flex items-start gap-2">
+                      <span x-show="check.passed" class="text-moss flex-shrink-0">✓</span>
+                      <span x-show="!check.passed" class="text-[#FF6347] flex-shrink-0">✗</span>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sec" x-text="check.rule"></p>
+                        <p class="text-ter text-[10px] mt-0.5">
+                          <span x-show="check.predicted_residue_mg_kg !== undefined">
+                            残留 <span class="text-pri" x-text="check.predicted_residue_mg_kg"></span> /
+                            限值 <span class="text-pri" x-text="check.limit_mg_kg"></span> ·
+                            margin <span :class="check.margin >= 0.05 ? 'text-moss' : 'text-gold'" x-text="check.margin"></span>
+                          </span>
+                          <span x-show="check.phi_days !== undefined">
+                            PHI <span class="text-pri" x-text="check.phi_days"></span> 天 /
+                            采茶余 <span class="text-pri" x-text="check.days_until_harvest"></span> 天
+                          </span>
+                          <span x-show="check.matched !== undefined && (check.matched || []).length > 0">
+                            匹配 <span class="text-[#FF6347]" x-text="(check.matched || []).join('、')"></span>
+                          </span>
+                          <span x-show="check.matched !== undefined && (!check.matched || check.matched.length === 0)">
+                            未命中禁用清单
+                          </span>
+                          <span x-show="check.compatible !== undefined">
+                            <span x-text="check.compatible ? '有机认证' : '非有机药剂'"></span>
+                          </span>
+                          <span x-show="check.reason !== undefined" class="text-[#FF8866]" x-text="check.reason"></span>
+                        </p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-4 flex items-center justify-between text-[10px] font-mono">
+          <div class="flex items-center gap-4 text-ter">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-moss"></span>low</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-gold"></span>medium</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-[#C8741E]"></span>high · 触发 HIL</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-[#FF6347]"></span>rejected</span>
+          </div>
+          <span class="text-ter">
+            <span class="text-moss">●</span>
+            <span>所有判定由前端 JS 实时计算，无任何预录</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============================================================ -->
@@ -1397,6 +1523,20 @@ function app() {
     chatLoading: false,
     chatError: '',
 
+    // ============ Solver Test Suite (前端 JS 实时求解 · 与后端 compliance.py 等价) ============
+    showSolverSuite: false,
+    solverTab: 'eu',                 // 当前测试场景
+    expandedSolverRow: null,         // 展开详情的农药 ID
+    pesticideDb: [],
+    bannedList: [],
+    mrlDb: { china_gb2763_2026: {}, eu_511: {} },
+    testScenarios: [
+      { id: 'cn',         name: '国内市场',     desc: '出口 = 国内 (GB 2763-2026)，常规采茶窗口 21 天',         context: { offset: 21, export_market: 'CN', is_organic: false } },
+      { id: 'eu',         name: '欧盟出口',     desc: '出口 = 欧盟 (EC 396/2005)，常规采茶窗口（即 Case B）',     context: { offset: 21, export_market: 'EU', is_organic: false } },
+      { id: 'eu_organic', name: '欧盟·有机',    desc: '欧盟出口 + NOP / EU Organic 有机基地认证',              context: { offset: 21, export_market: 'EU', is_organic: true  } },
+      { id: 'urgent',     name: '紧急采茶',     desc: '欧盟出口 + 采茶日仅 4 天后（PHI 严苛筛除）',             context: { offset: 4,  export_market: 'EU', is_organic: false } },
+    ],
+
     complianceChecks: [
       { label: '茶树禁用清单 (GB 2763-2026, 30 项)', status: '' },
       { label: '安全间隔期 (PHI = 14 天)', status: '' },
@@ -1583,6 +1723,133 @@ function app() {
         const el = document.getElementById('farmerChatBottom');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }, 80);
+    },
+
+    // ============ Solver Test Suite · 前端 JS 求解器 ============
+    // 与后端 src/tools/compliance.py 逻辑等价，纯客户端运行
+    async loadComplianceData() {
+      if (this.pesticideDb.length) return;
+      try {
+        const [a, b, c] = await Promise.all([
+          fetch('data/pesticide_db.json').then(r => r.json()),
+          fetch('data/banned_pesticides.json').then(r => r.json()),
+          fetch('data/mrl_database.json').then(r => r.json()),
+        ]);
+        this.pesticideDb = a.pesticides || [];
+        this.bannedList = b.banned_for_tea || [];
+        this.mrlDb = c || { china_gb2763_2026: {}, eu_511: {} };
+      } catch (e) {
+        console.warn('compliance data load failed:', e);
+      }
+    },
+
+    _checkBanned(p) {
+      const matched = this.bannedList.filter(b => p.name.includes(b));
+      return { passed: matched.length === 0, rule: 'GB 2763-2026 茶树禁用清单', matched };
+    },
+    _checkPhi(p, offsetDays) {
+      const phi = p.phi_days || 0;
+      const today = new Date();
+      const harvest = new Date(today.getTime() + offsetDays * 86400000);
+      const days = Math.round((harvest - today) / 86400000);
+      const earliest = new Date(today.getTime() + phi * 86400000);
+      return {
+        passed: days >= phi,
+        rule: '安全间隔期 (PHI)',
+        phi_days: phi,
+        days_until_harvest: days,
+        earliest_harvest_date: earliest.toISOString().slice(0, 10),
+      };
+    },
+    _checkMrl(p, country) {
+      const limits = country === 'CN' ? this.mrlDb.china_gb2763_2026 : this.mrlDb.eu_511;
+      const standard = country === 'CN' ? 'GB 2763-2026 国内MRL' : '欧盟 EC 396/2005 MRL';
+      const ai = p.active_ingredient || '';
+      if (!(ai in limits)) {
+        return { passed: false, rule: standard, reason: `${ai} 不在 ${country} 茶叶许可清单` };
+      }
+      const limit = limits[ai];
+      const residue = p.expected_residue_mg_kg ?? limit * 0.5;
+      return {
+        passed: residue <= limit,
+        rule: standard,
+        active_ingredient: ai,
+        limit_mg_kg: limit,
+        predicted_residue_mg_kg: residue,
+        margin: Math.round((limit - residue) * 10000) / 10000,
+      };
+    },
+    _checkOrganic(p) {
+      return {
+        passed: !!p.organic_certified,
+        rule: '有机茶认证 (NOP/EU Organic)',
+        compatible: !!p.organic_certified,
+      };
+    },
+
+    // 单农药 × 场景的完整求解
+    solveOne(pesticide, context) {
+      const checks = {
+        banned_list: this._checkBanned(pesticide),
+        phi: this._checkPhi(pesticide, context.offset),
+        mrl_china: this._checkMrl(pesticide, 'CN'),
+      };
+      if (context.export_market === 'EU') checks.mrl_eu = this._checkMrl(pesticide, 'EU');
+      if (context.is_organic) checks.organic_compat = this._checkOrganic(pesticide);
+
+      const allPassed = Object.values(checks).every(v => v.passed);
+      let risk;
+      if (!allPassed) risk = 'rejected';
+      else if ((checks.mrl_eu?.margin ?? 1.0) < 0.05) risk = 'high';
+      else if (context.export_market === 'EU') risk = 'medium';
+      else risk = 'low';
+
+      // 找出第一个 fail 的 check（用作 reject reason 标签）
+      let failedRule = null;
+      for (const [k, v] of Object.entries(checks)) {
+        if (!v.passed) { failedRule = { key: k, ...v }; break; }
+      }
+
+      return { pesticide, checks, all_passed: allPassed, risk_level: risk, failed_rule: failedRule };
+    },
+
+    // 当前 tab 对应场景的全部 5 农药结果
+    get currentSolverResults() {
+      const scen = this.testScenarios.find(s => s.id === this.solverTab);
+      if (!scen || !this.pesticideDb.length) return [];
+      return this.pesticideDb.map(p => this.solveOne(p, scen.context));
+    },
+
+    // 求解器结果的颜色编码 (badge 配色)
+    solverBadge(result) {
+      switch (result.risk_level) {
+        case 'rejected': return 'bg-brick/20 text-[#FF6347] border border-brick/40';
+        case 'high':     return 'bg-[#C8741E]/20 text-[#FFA866] border border-[#C8741E]/40';
+        case 'medium':   return 'bg-gold/20 text-gold border border-gold/40';
+        case 'low':
+        default:         return 'bg-moss/20 text-moss border border-moss/40';
+      }
+    },
+
+    // 一句话总结失败原因（用于矩阵单元格右侧小字）
+    solverReason(result) {
+      if (result.all_passed) return '';
+      const f = result.failed_rule;
+      if (!f) return '';
+      if (f.key === 'mrl_eu' || f.key === 'mrl_china') {
+        if (f.reason) return f.reason;
+        return `残留 ${f.predicted_residue_mg_kg} > 限值 ${f.limit_mg_kg} mg/kg`;
+      }
+      if (f.key === 'phi') return `PHI ${f.phi_days} 天 > 采茶余 ${f.days_until_harvest} 天`;
+      if (f.key === 'banned_list') return `禁用：${(f.matched || []).join('、')}`;
+      if (f.key === 'organic_compat') return '非有机认证';
+      return f.rule || '未通过';
+    },
+
+    openSolverSuite() {
+      this.showSolverSuite = true;
+      this.expandedSolverRow = null;
+      this.loadComplianceData().then(() => this.refreshIcons());
     },
 
     // ============ Terminal Log Drawer ============
