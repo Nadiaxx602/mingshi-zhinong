@@ -1045,7 +1045,7 @@
               </div>
               <div class="mt-3 pt-3 border-t border-div">
                 <p class="text-ter text-[10px] mb-2">行动事项</p>
-                <template x-for="item in (reportManager?.action_items || ['今天下午4点后施药', '14天后复检', '采茶前送检农残'])">
+                <template x-for="item in (reportManager?.action_items || ['今天下午4点后施药', '5天后复检', '采茶前送检农残'])">
                   <p class="text-sec leading-relaxed">· <span x-text="item"></span></p>
                 </template>
               </div>
@@ -1143,11 +1143,11 @@
             <span>用药提醒卡片</span>
           </h3>
           <div class="text-xs space-y-2 text-pri">
-            <p class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">施药日期</span><span class="font-mono">今天（5月18日）</span></p>
+            <p class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">施药日期</span><span class="font-mono">今天（5月16日）</span></p>
             <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">推荐时段</span><span class="font-mono">下午 4 点后</span></p>
             <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">地块</span><span>B-3 东南角约 <span class="font-mono">2 亩</span></span></p>
-            <p class="flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">用量</span><span class="font-mono">每亩 35 ml · 1:1500 稀释</span></p>
-            <p class="pt-2 border-t border-div flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-gold"></i><span class="text-gold font-medium">14 天后才能采茶（最早 6 月 1 日）</span></p>
+            <p class="flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 text-ter"></i><span class="text-ter w-16">用量</span><span class="font-mono">每亩 120 ml · 1:500 稀释</span></p>
+            <p class="pt-2 border-t border-div flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-gold"></i><span class="text-gold font-medium">5 天后才能采茶（最早 5 月 21 日）</span></p>
           </div>
           <button class="w-full mt-3 py-2 bg-foundry hover:bg-foundry-hover text-cream rounded text-xs flex items-center justify-center gap-1.5">
             <i data-lucide="bell" class="w-3.5 h-3.5"></i>
@@ -1831,6 +1831,64 @@ function app() {
       this.log('INFO',  'treatment_agent', 'candidates=4 [P001, P002, P003, P004]');
       await this.delay(1500);
 
+      // ============ 核心反差感：LLM 候选 → 确定性求解器判定 ============
+      // 让评委一眼看出"LLM 推了 4 个，求解器拒了 2 个"的核心价值
+      this.currentDetailHTML = `
+        <div class="space-y-3 fade-in">
+          <div class="text-sm text-white/85 flex items-center gap-2">
+            <span class="text-[#C8741E] pulse-soft">●</span>
+            <span><strong class="text-[#C8741E]">Phase 2</strong> · 确定性求解器判定（核心安全设计）</span>
+          </div>
+
+          <div class="bg-[#0A0D0A] border border-white/10 rounded-lg overflow-hidden">
+            <div class="px-3 py-2 text-[10px] font-mono text-white/40 border-b border-white/10 flex justify-between">
+              <span>LLM 候选池 → Python 硬约束求解</span>
+              <span class="text-[#FF6347]">已剔除 2 / 4</span>
+            </div>
+
+            <div class="px-3 py-2 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-white/85">P001 苯醚甲环唑·吡唑醚菌酯</span>
+              <span class="text-[#87A96B]">✓ 通过 · 高风险</span>
+            </div>
+
+            <div class="px-3 py-2 bg-brick/10 border-t border-white/5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-white/85">P002 嘧菌酯 25%悬浮剂</span>
+                <span class="text-[#FF6347]">✗ 求解器拒绝</span>
+              </div>
+              <p class="text-[10px] text-white/55 mt-1 font-mono pl-2 border-l-2 border-brick/40">
+                EU MRL · 残留 <span class="text-[#FF6347]">0.15</span> &gt; 限值 0.05 mg/kg
+              </p>
+            </div>
+
+            <div class="px-3 py-2 bg-brick/10 border-t border-white/5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-white/85">P003 代森锰锌</span>
+                <span class="text-[#FF6347]">✗ 求解器拒绝</span>
+              </div>
+              <p class="text-[10px] text-white/55 mt-1 font-mono pl-2 border-l-2 border-brick/40">
+                EU MRL · 残留 <span class="text-[#FF6347]">0.55</span> &gt; 限值 0.10 mg/kg
+              </p>
+            </div>
+
+            <div class="px-3 py-2 flex items-center justify-between text-[11px] font-mono border-t border-white/5">
+              <span class="text-white/85">P004 苦参碱 0.5%水剂（生物源）</span>
+              <span class="text-[#87A96B]">✓ 通过 · 中风险</span>
+            </div>
+
+            <div class="px-3 py-2 text-[10px] font-mono text-[#C8741E] border-t border-white/10 bg-[#C8741E]/5 leading-relaxed">
+              即使 LLM 推荐 P002 / P003，Python 求解器也<strong>强制剔除</strong><br>
+              <span class="text-white/50">→ 杜绝幻觉违规处方 · 出口订单 MRL 合规可证</span>
+            </div>
+          </div>
+        </div>
+      `;
+      this.refreshIcons();
+      this.log('WARN', 'compliance', 'P002 嘧菌酯 rejected · EU MRL residue 0.15 > limit 0.05 mg/kg');
+      this.log('WARN', 'compliance', 'P003 代森锰锌 rejected · EU MRL residue 0.55 > limit 0.10 mg/kg');
+      this.log('INFO', 'compliance', 'survived candidates: P001 (high risk), P004 (medium risk)');
+      await this.delay(3200 / this.speed);
+
       // Compliance progress
       this.showComplianceProgress = true;
       this.refreshIcons();
@@ -1864,7 +1922,7 @@ function app() {
       this.log('DEBUG', 'treatment_agent', 'llm_call: deepseek-v4-flash, phase=final_selection');
       await this.delay(1200);
 
-      this.agentList[3].summary = '最终处方：苯醚甲环唑·吡唑醚菌酯 30%SC · 1:1500 · 35ml/亩 · PHI 14天';
+      this.agentList[3].summary = '最终处方：苦参碱 0.5%水剂（生物源）· 1:500 · 120ml/亩 · PHI 5天';
       this.agentStates['treatment_agent'] = 'done';
       this.agentList[3].duration = '6.2s';
       this.tokenCount += this.agentList[3].tokensNum;
@@ -1961,40 +2019,42 @@ function app() {
     },
 
     useDefaultReports() {
+      // fallback 数据与最新 trace_caseB.json 对齐：决策 Agent 选的是 P004 苦参碱（生物源）
       if (!this.finalPrescription) {
         this.finalPrescription = {
-          pesticide_name: '苯醚甲环唑·吡唑醚菌酯 30%悬浮剂',
-          registration_no: 'PD20191234',
-          dilution_ratio: '1:1500',
-          dose_ml_per_mu: 35,
-          phi_days: 14,
-          earliest_harvest_date: '2026-06-01'
+          pesticide_name: '苦参碱 0.5%水剂（生物源）',
+          registration_no: 'PD20151024',
+          dilution_ratio: '1:500',
+          dose_ml_per_mu: 120,
+          total_dose_ml: 6000,
+          phi_days: 5,
+          earliest_harvest_date: '2026-05-21'
         };
       }
       if (!this.reportFarmer) {
-        this.reportFarmer = '老张师傅好。B-3 地块的茶叶得了茶炭疽病，今天下午 4 点以后请用「苯醚甲环唑+吡唑醚菌酯」打一下，按 1:1500 兑水，每亩约 35 毫升。打完以后等 14 天才能采茶，最早 6 月 1 号能采。需要语音提醒可以点下方"录音"按钮。';
+        this.reportFarmer = '师傅，茶园炭疽病有点凶（中等偏重），赶紧打药！用苦参碱（生物药），一瓶兑500倍水，一亩地打120毫升，对着叶子喷匀。打完等5天才能采茶，最早5月21号可以摘。这次药安全，欧盟标准都达标，放心用。下次记得换波尔多液轮换打。';
       }
       if (!this.reportManager) {
         this.reportManager = {
           kpi_summary: {
             affected_area_mu: 2.1,
-            intervention_cost_estimate_yuan: 162,
+            intervention_cost_estimate_yuan: 53,
             expected_yield_protection_pct: 92,
             compliance_status: '达标',
-            next_harvest_date: '2026-06-01'
+            next_harvest_date: '2026-05-21'
           },
-          action_items: ['今天下午 4 点后施药', '7 天后回头复检', '采茶前送检农残（出口订单必须）']
+          action_items: ['今天下午 4 点后施药', '5 天后回头复检', '采茶前送检农残（出口订单必须）']
         };
       }
       if (!this.reportGovernment) {
         this.reportGovernment = {
-          filing_id: 'TEA-2026-05-18-001',
+          filing_id: 'TEA-2026-05-16-001',
           operation_record: {
-            date: '2026-05-18',
+            date: '2026-05-16',
             plot_id: 'B-3',
-            pesticide_name: '苯醚甲环唑·吡唑醚菌酯 30%SC',
-            registration_no: 'PD20191234',
-            dose: '35 ml/亩',
+            pesticide_name: '苦参碱 0.5%水剂（生物源）',
+            registration_no: 'PD20151024',
+            dose: '120 ml/亩',
             operator_signature: this.hilSignature || 'ZHANG001'
           },
           compliance_certificate: {
